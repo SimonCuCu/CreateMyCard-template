@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from api.schemas import GenerateWidgetCardRequest
+from config.config import get_settings
 from core.errors import GenerationStatus
 from models.generation import CandidateDataBinding, EventAction, TaskSpec
 from models.service import ArtifactSaveResult
@@ -26,6 +27,7 @@ from services.template_generation import (
     route_legacy_python_terse_generation,
 )
 from services.template_generation.binding_dependencies import enrich_template_bindings
+from services.template_generation.engine import pipeline as template_pipeline
 from services.template_generation.engine.advanced.content_selectors import (
     app_usage_overview_is_eligible,
     app_usage_overview_query_is_supported,
@@ -101,11 +103,7 @@ def test_phone_battery_binding_auto_includes_numeric_soc_for_template_rendering(
 def _template_node_options(node: Any) -> dict[str, Any]:
     value = node.values[-1]
     assert value.kind == "object"
-    return {
-        key: item.value
-        for key, item in value.properties.items()
-        if item.kind == "literal"
-    }
+    return {key: item.value for key, item in value.properties.items() if item.kind == "literal"}
 
 
 def _template_nodes(node: Any, component: str) -> list[Any]:
@@ -140,12 +138,15 @@ def test_pr6_bluetooth_action_background_is_owned_by_cardtpl_metadata():
         ),
     )
 
-    assert _provider_layout_action_background(
-        contract,
-        registry,
-        foreground="#FF64BB5C",
-        default="#FFFFFFFF",
-    ) == "#1964BB5C"
+    assert (
+        _provider_layout_action_background(
+            contract,
+            registry,
+            foreground="#FF64BB5C",
+            default="#FFFFFFFF",
+        )
+        == "#1964BB5C"
+    )
 
 
 def test_pr7_visual_fixes_are_encoded_in_provider_cardtpl_variants():
@@ -311,8 +312,9 @@ async def test_derived_parameter_source_field_is_counted_as_template_coverage():
     projected_data = output.projected_task_spec.dataModelSchema["data"]
     assert "AppUsageOverview" not in projected_data
     assert (
-        projected_data["appUsageStats"]["_templateProjection"]["AppUsageOverview"]
-        ["durationPrimaryValueText"]["sampleValue"]
+        projected_data["appUsageStats"]["_templateProjection"]["AppUsageOverview"][
+            "durationPrimaryValueText"
+        ]["sampleValue"]
         == "1"
     )
     assert "/updatedAt" not in output.a2ui
@@ -439,11 +441,7 @@ async def test_bluetooth_connection_and_case_queries_have_honest_template_covera
         component_id="BluetoothDeviceOverview",
         capability_id="GetEarphoneInfo",
         required_fields=required_fields,
-        body=(
-            'SingleFocusLayout(Template("BluetoothDeviceOverview@1","'
-            + variant
-            + '",{}));'
-        ),
+        body=('SingleFocusLayout(Template("BluetoothDeviceOverview@1","' + variant + '",{}));'),
     )
 
     output = await generate_template_a2ui(
@@ -562,9 +560,11 @@ class WeatherTemplateModel:
         required_fields: tuple[str, ...] = _WEATHER_TEMPLATE_FIELDS,
     ) -> None:
         self.body_called = False
+        self.route_called = False
         self.required_fields = required_fields
 
     async def generate_json(self, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        self.route_called = True
         return {
             "routeVersion": "template-route-decision/2",
             "templateUsable": True,
@@ -731,6 +731,7 @@ async def test_weather_template_generates_a2ui_and_compact_artifact(monkeypatch)
     assert response.status == GenerationStatus.SUCCESS
     assert response.artifactUrl == "https://artifact.test/weather-template"
     assert starts == ["2x2"]
+    assert model.route_called is False
     assert model.body_called is True
     assert captured["compact"]
     assert "{{ ${/data/weather/current/condition}" in captured["compact"]
@@ -738,9 +739,7 @@ async def test_weather_template_generates_a2ui_and_compact_artifact(monkeypatch)
     protocol_profile = A2UIProtocolRegistry(A2UI_FORM_PROTOCOL_PROFILE_ID).get_profile()
     assert messages[0]["createSurface"]["catalogId"] == protocol_profile["catalogId"]
     root = next(
-        item
-        for item in messages[1]["updateComponents"]["components"]
-        if item["id"] == "root"
+        item for item in messages[1]["updateComponents"]["components"] if item["id"] == "root"
     )
     assert root["styles"]["borderRadius"] == 18
     assert captured["artifact"].effectiveCapabilities["data"] == ["ViewWeather"]
@@ -833,11 +832,71 @@ async def test_unused_candidate_fields_do_not_block_query_required_weather_field
     )
 
     assert output.template_ids == ("WeatherOverview@1",)
+
+
+@pytest.mark.asyncio
+async def test_schema_hash_miss_falls_back_to_first_layer_llm():
+    model = WeatherTemplateModel()
+    task_spec = _weather_task_spec()
+    task_spec.dataModelSchema["data"]["weather"]["unknown"] = {
+        "type": "string",
+        "description": "not declared by the Provider schema",
+        "sampleValue": "fallback",
+    }
+    binding = CandidateDataBinding(
+        capabilityId="ViewWeather",
+        arguments={"districtName": "青浦区", "prefectureName": "上海市"},
+        writeResultTo="/data/weather",
+        candidateOutputFields=list(_WEATHER_TEMPLATE_FIELDS),
+    )
+
+    output = await generate_template_a2ui(
+        task_spec,
+        _weather_card_spec(),
+        (binding,),
+        model,
+    )
+
+    assert model.route_called is True
+    assert model.body_called is True
+    assert output.template_ids == ("WeatherOverview@1",)
+
+
+@pytest.mark.asyncio
+async def test_schema_hash_error_falls_back_to_first_layer_llm(monkeypatch):
+    model = WeatherTemplateModel()
+
+    def raise_hash_error(*_args: Any, **_kwargs: Any) -> None:
+        raise RuntimeError("broken hash index")
+
+    monkeypatch.setattr(
+        template_pipeline,
+        "plan_template_route_with_hash",
+        raise_hash_error,
+    )
+    binding = CandidateDataBinding(
+        capabilityId="ViewWeather",
+        arguments={"districtName": "青浦区", "prefectureName": "上海市"},
+        writeResultTo="/data/weather",
+        candidateOutputFields=list(_WEATHER_TEMPLATE_FIELDS),
+    )
+
+    output = await generate_template_a2ui(
+        _weather_task_spec(),
+        _weather_card_spec(),
+        (binding,),
+        model,
+    )
+
+    assert model.route_called is True
+    assert model.body_called is True
+    assert output.template_ids == ("WeatherOverview@1",)
     assert model.body_called is True
 
 
 @pytest.mark.asyncio
-async def test_query_required_fields_must_come_from_candidates():
+async def test_query_required_fields_must_come_from_candidates(monkeypatch):
+    monkeypatch.setattr(get_settings(), "enable_template_schema_hash", False)
     model = WeatherTemplateModel(("/current/airQuality",))
     binding = CandidateDataBinding(
         capabilityId="ViewWeather",

@@ -15,7 +15,9 @@ generateWidgetCardCompactDsl
        │    └─ 原始 Compact 流程
        └─ create
             ├─ 准备 dev 能力裁决、CardSpec、TaskSpec
-            ├─ 第一层 LLM：从候选字段中提取 query 必显字段，选择 Theme 和业务模板
+            ├─ CLI DataSchema Hash：唯一命中时选择 Theme 和业务模板，跳过第一层 LLM
+            │    └─ 未命中、歧义、不兼容或异常 → 原第一层 LLM
+            ├─ 第一层 LLM 回退：从候选字段中提取 query 必显字段，选择 Theme 和业务模板
             ├─ 服务端完整覆盖校验
             │    ├─ 必显字段不属于候选或模板未消费任一必显字段 → 原始 Compact 流程
             │    └─ 全部覆盖 → 锁定模板路由
@@ -33,7 +35,9 @@ generateWidgetCardTerseDslNested2
   └─ route_terse_nested2_generation
        ├─ edit → failed
        └─ create
-            ├─ 第一层 LLM 提取 query 必显字段并执行服务端完整覆盖校验
+            ├─ CLI DataSchema Hash 唯一命中时跳过第一层 LLM
+            │    └─ 未命中、歧义、不兼容或异常 → 原第一层 LLM
+            ├─ 第一层 LLM 回退提取 query 必显字段并执行服务端完整覆盖校验
             │    └─ 未匹配、字段未完整覆盖或模型不可用 → failed
             ├─ 第二层 LLM、参数校验和模板展开
             │    └─ 任一失败 → failed
@@ -63,6 +67,7 @@ generateWidgetCardTerseDslNested2
 |---|---|---|
 | edit 请求 | 原始流程 | 二次更新不重新选择模板 |
 | 无真实模型运行时 | 原始流程 | 保持 dev mock 和既有测试行为 |
+| Schema Hash 未命中或异常 | 原第一层 LLM | Hash 只替代可证明的唯一模板选择 |
 | 第一层拒绝或异常 | 原始流程 | 尚未承诺模板可完整表达 |
 | 确定性覆盖失败 | 原始流程 | 任一用户选定字段无法由模板表达 |
 | 第二层或模板编译失败 | 返回 failed | 模板路由已经锁定，禁止静默换实现 |
@@ -71,6 +76,12 @@ generateWidgetCardTerseDslNested2
 `candidateOutputFields` 是可用候选集合，不是强制展示集合。第一层只能从候选集合中输出 query 实际要求的
 必显字段；服务端随后证明这些字段被所选模板直接绑定或作为派生参数来源消费。模板可以为了保持原始视觉
 额外展示其必需事实，但不得遗漏 query 必显事实。
+
+Schema Hash 默认开启。Provider Bundle 加载时保留已通过 Draft 2020-12 校验的 `outputSchema`；运行时按
+CardSpec `writeResultTo` 取得对应 TaskSpec Schema 子树，忽略 sampleValue、description 和字段顺序后计算
+版本化 SHA-256。Provider 完整 Schema 会先投影到运行时字段集合，再比较 Hash 与 canonical schema。只有
+capability、结构、尺寸、模板准入和完整覆盖均得到唯一结果时才跳过第一层 LLM；其它结果统一回退原第一层
+LLM，不直接进入原始 Compact 回退或 Terse 失败。
 
 `before_model_call` 由门面包装为单次通知。第一层已经触发通知时，即使回退原始模型，也不会重复下发开始事件。
 

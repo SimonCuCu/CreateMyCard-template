@@ -15,6 +15,10 @@ from services.template_generation.engine.cardplan.prompt import (
     admitted_provider_template_variants,
 )
 from services.template_generation.engine.cardplan.registry import CardPlanRegistry
+from services.template_generation.schema_hash import (
+    HashRouteDecision,
+    schemas_have_matching_structure,
+)
 
 from . import content_selectors as _content_selectors
 from .content_selectors import (
@@ -349,10 +353,7 @@ def _requested_output_fields_by_capability(
     for binding in coverage_bindings:
         values = fields.setdefault(binding.capabilityId, [])
         values.extend(binding.candidateOutputFields)
-    return {
-        capability_id: tuple(dict.fromkeys(paths))
-        for capability_id, paths in fields.items()
-    }
+    return {capability_id: tuple(dict.fromkeys(paths)) for capability_id, paths in fields.items()}
 
 
 def validate_template_request_coverage(
@@ -391,8 +392,7 @@ def validate_template_request_coverage(
         )
         if not options:
             raise ValueError(
-                "Template route component has no applicable Provider Template: "
-                f"{component_id}"
+                f"Template route component has no applicable Provider Template: {component_id}"
             )
         component_options.append(options)
     for selected_options in product(*component_options):
@@ -520,6 +520,144 @@ async def plan_template_route_with_llm(
     except ValueError as exc:
         raise TemplateRouteNotApplicable(str(exc)) from exc
     return scope
+
+
+def plan_template_route_with_hash(
+    task_spec: TaskSpec,
+    data_shape: DataShape,
+    registry: CardPlanRegistry,
+    coverage_bindings: tuple[CandidateDataBinding, ...],
+    available_capability_ids: tuple[str, ...] | None = None,
+    card_spec: dict[str, Any] | None = None,
+) -> HashRouteDecision:
+    """Select a unique Provider-backed scope by schema Hash or request LLM fallback."""
+
+    if not coverage_bindings or card_spec is None:
+        return HashRouteDecision(False, reason="missing_bindings")
+    effective_ids = resolve_available_capability_ids(
+        task_spec,
+        registry,
+        available_capability_ids,
+    )
+    trusted_candidates = _component_candidates(
+        task_spec,
+        data_shape,
+        registry,
+        effective_ids,
+    )
+    selected_components: list[UxBusinessComponentCapability] = []
+    total_candidates = 0
+    for binding in coverage_bindings:
+        runtime_schema = _runtime_schema_for_capability(
+            task_spec,
+            card_spec,
+            binding.capabilityId,
+        )
+        if runtime_schema is None:
+            return HashRouteDecision(False, reason="runtime_schema_missing")
+        matched_template_ids = _matched_provider_template_ids(
+            registry,
+            binding.capabilityId,
+            runtime_schema,
+        )
+        components = tuple(
+            component
+            for component in trusted_candidates
+            if binding.capabilityId in component.data_capability_ids
+            and bool(set(component.local_template_ids) & matched_template_ids)
+        )
+        total_candidates += len(components)
+        if len(components) != 1:
+            reason = "not_found" if not components else "ambiguous"
+            return HashRouteDecision(
+                False,
+                reason=reason,
+                candidate_count=total_candidates,
+            )
+        selected_components.append(components[0])
+    selected_by_name = {item.name: item for item in selected_components}
+    selected_components = list(selected_by_name.values())
+    theme_ids = _theme_ids_for_components(tuple(selected_components), registry)
+    if not theme_ids:
+        return HashRouteDecision(
+            False,
+            reason="theme_incompatible",
+            candidate_count=total_candidates,
+        )
+    try:
+        scope = AdvancedScopeBrief(
+            themeId=theme_ids[0],
+            advancedComponentIds=tuple(item.name for item in selected_components),
+        )
+        scope = _normalize_redundant_2x2_support(scope, task_spec)
+        validate_advanced_scope(
+            scope,
+            task_spec,
+            data_shape,
+            registry,
+            available_capability_ids,
+        )
+        validate_template_request_coverage(
+            scope,
+            task_spec,
+            registry,
+            coverage_bindings,
+            _requested_output_fields_by_capability(coverage_bindings),
+            card_spec,
+        )
+    except ValueError:
+        return HashRouteDecision(
+            False,
+            reason="coverage_incompatible",
+            candidate_count=total_candidates,
+        )
+    return HashRouteDecision(
+        True,
+        scope=scope,
+        reason="matched",
+        candidate_count=total_candidates,
+    )
+
+
+def _runtime_schema_for_capability(
+    task_spec: TaskSpec,
+    card_spec: dict[str, Any],
+    capability_id: str,
+) -> dict[str, Any] | None:
+    bindings = card_spec.get("dataBindings")
+    if not isinstance(bindings, list):
+        return None
+    roots: set[str] = set()
+    for item in bindings:
+        if not isinstance(item, dict) or item.get("capabilityId") != capability_id:
+            continue
+        root = item.get("writeResultTo")
+        if isinstance(root, str):
+            roots.add(root)
+    if len(roots) != 1:
+        return None
+    value: Any = task_spec.dataModelSchema
+    for raw_part in next(iter(roots)).split("/")[1:]:
+        part = raw_part.replace("~1", "/").replace("~0", "~")
+        if not isinstance(value, dict) or part not in value:
+            return None
+        value = value[part]
+    return value if isinstance(value, dict) else None
+
+
+def _matched_provider_template_ids(
+    registry: CardPlanRegistry,
+    capability_id: str,
+    runtime_schema: dict[str, Any],
+) -> set[str]:
+    template_ids: set[str] = set()
+    for record in registry.provider_schema_records:
+        if record.capability_id != capability_id:
+            continue
+        matched, _ = schemas_have_matching_structure(record.output_schema, runtime_schema)
+        if matched:
+            template_ids.update(record.template_ids)
+    return template_ids
 
 
 def _normalize_scope_to_shared_theme(
@@ -735,11 +873,7 @@ def resolve_scope_layout_ids(
         {"ActivityOverview", "HeartRateOverview"},
         {"ActivityOverview", "WorkoutOverview"},
     )
-    if (
-        health_component_names
-        and count > 1
-        and component_names not in approved_health_compositions
-    ):
+    if health_component_names and count > 1 and component_names not in approved_health_compositions:
         return ()
     if "AppUsageOverview" in component_names:
         action_count = len(approved_app_usage_action_ids(task_spec))
@@ -758,9 +892,7 @@ def resolve_scope_layout_ids(
     )
     if schedule_owned_scope and any(item.name == "ScheduleOverview" for item in components):
         action_count = len(approved_schedule_action_ids(task_spec))
-    battery_owned_scope = component_names.issubset(
-        {"BatteryOverview", "BluetoothDeviceOverview"}
-    )
+    battery_owned_scope = component_names.issubset({"BatteryOverview", "BluetoothDeviceOverview"})
     if component_names == {"BatteryOverview", "BluetoothDeviceOverview"}:
         action_count = 0
     elif battery_owned_scope and "BatteryOverview" in component_names:
@@ -804,9 +936,7 @@ def resolve_scope_layout_ids(
             if layout_id not in {"HeroSupportLayout", "HeroSupportActionLayout"}:
                 continue
         if component_names == {"BatteryOverview", "BluetoothDeviceOverview"}:
-            expected_layout = (
-                "PeerPairLayout" if task_spec.size == "2x2" else "HeroSupportLayout"
-            )
+            expected_layout = "PeerPairLayout" if task_spec.size == "2x2" else "HeroSupportLayout"
             if layout_id != expected_layout:
                 continue
         if component_names == {"BluetoothDeviceOverview"}:
@@ -821,10 +951,16 @@ def resolve_scope_layout_ids(
         has_weather = any(item.name == "WeatherOverview" for item in components)
         if has_weather and layout_id == "WeatherNowForecastLayout":
             continue
-        if has_weather and count > 1 and task_spec.size == "2x2" and layout_id not in {
-            "HeroSupportLayout",
-            "HeroSupportActionLayout",
-        }:
+        if (
+            has_weather
+            and count > 1
+            and task_spec.size == "2x2"
+            and layout_id
+            not in {
+                "HeroSupportLayout",
+                "HeroSupportActionLayout",
+            }
+        ):
             continue
         allowed.append(layout_id)
     return tuple(sorted(allowed, key=lambda item: _layout_rank(item, count, has_action)))

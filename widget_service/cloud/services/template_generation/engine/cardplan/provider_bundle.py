@@ -95,7 +95,18 @@ class ProviderManifest(StrictModel):
 class LoadedProviderBundle:
     manifest: ProviderManifest
     templates: tuple[TemplateDefinition, ...]
+    schema_records: tuple[ProviderSchemaRecord, ...]
     bundle_digest: str
+
+
+@dataclass(frozen=True)
+class ProviderSchemaRecord:
+    provider_id: str
+    provider_version: str
+    capability_id: str
+    schema_version: str
+    template_ids: tuple[str, ...]
+    output_schema: dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -117,19 +128,29 @@ class _CompiledParameters:
 
 def load_provider_templates(providers_root: Path) -> tuple[TemplateDefinition, ...]:
     """Compile every registered Provider Bundle below one trusted source root."""
+    definitions, _ = load_provider_template_catalog(providers_root)
+    return definitions
+
+
+def load_provider_template_catalog(
+    providers_root: Path,
+) -> tuple[tuple[TemplateDefinition, ...], tuple[ProviderSchemaRecord, ...]]:
+    """Load trusted Provider Templates and their validated data schemas once."""
     if not providers_root.is_dir():
-        return ()
+        return (), ()
     definitions: list[TemplateDefinition] = []
+    schema_records: list[ProviderSchemaRecord] = []
     seen: set[str] = set()
     manifests = sorted(providers_root.glob("*/provider.json"))
     for manifest_path in manifests:
         bundle = load_provider_bundle(manifest_path.parent)
+        schema_records.extend(bundle.schema_records)
         for definition in bundle.templates:
             if definition.wire_id in seen:
                 raise ValueError(f"duplicate Provider Template: {definition.wire_id}")
             seen.add(definition.wire_id)
             definitions.append(definition)
-    return tuple(definitions)
+    return tuple(definitions), tuple(schema_records)
 
 
 def load_provider_bundle(bundle_root: Path) -> LoadedProviderBundle:
@@ -151,6 +172,17 @@ def load_provider_bundle(bundle_root: Path) -> LoadedProviderBundle:
     owners = _template_owners(manifest.capabilities)
     bundle_digest = _bundle_digest(root, manifest)
     definitions: list[TemplateDefinition] = []
+    schema_records = tuple(
+        ProviderSchemaRecord(
+            provider_id=manifest.provider_id,
+            provider_version=manifest.provider_version,
+            capability_id=capability.capability_id,
+            schema_version=capability.data_schema.version,
+            template_ids=capability.templates,
+            output_schema=_load_data_schema(root, capability),
+        )
+        for capability in manifest.capabilities
+    )
     for wire_id, entry in template_entries.items():
         capability = owners.get(wire_id)
         if capability is None:
@@ -175,7 +207,12 @@ def load_provider_bundle(bundle_root: Path) -> LoadedProviderBundle:
     if set(owners) != set(template_entries):
         missing = sorted(set(owners) - set(template_entries))
         raise ValueError(f"Provider capability references unknown Templates: {missing}")
-    return LoadedProviderBundle(manifest, tuple(definitions), bundle_digest)
+    return LoadedProviderBundle(
+        manifest,
+        tuple(definitions),
+        schema_records,
+        bundle_digest,
+    )
 
 
 def compile_card_template(

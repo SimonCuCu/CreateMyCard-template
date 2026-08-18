@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.logger import logger
+from config.config import get_settings
 from models.generation import CandidateDataBinding, TaskSpec
 from services.protocol_registry import (
     TERSE_DSL_NESTED2_PROFILE_ID,
@@ -21,6 +22,7 @@ from services.template_generation.engine.advanced.content_selectors import (
 from services.template_generation.engine.advanced.data_shape import extract_data_shape
 from services.template_generation.engine.advanced.scope_planner import (
     TemplateRouteNotApplicable,
+    plan_template_route_with_hash,
     plan_template_route_with_llm,
     resolve_available_capability_ids,
 )
@@ -89,8 +91,7 @@ async def generate_template_a2ui(
             separators=(",", ":"),
         )
         selected_task_spec_message = (
-            f"{_MODULE} task_spec_after_content_selectors "
-            f"payload={selected_task_spec_payload}"
+            f"{_MODULE} task_spec_after_content_selectors payload={selected_task_spec_payload}"
         )
         print(selected_task_spec_message, flush=True)
         logger.info(selected_task_spec_message)
@@ -104,21 +105,45 @@ async def generate_template_a2ui(
         return await model_client.generate_json(prompt, phase=phase)
 
     try:
-        scope = await plan_template_route_with_llm(
-            selected_task_spec,
-            data_shape,
-            generate_json,
-            registry,
-            coverage_bindings,
-            available_capability_ids,
-            card_spec,
-        )
+        scope = None
+        if get_settings().enable_template_schema_hash:
+            try:
+                hash_decision = plan_template_route_with_hash(
+                    selected_task_spec,
+                    data_shape,
+                    registry,
+                    coverage_bindings,
+                    available_capability_ids,
+                    card_spec,
+                )
+            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+                logger.warning(
+                    f"{_MODULE} schema_hash_route matched=False "
+                    f"reason=index_unavailable exception_type={type(exc).__name__} "
+                    "fallback=first_layer_llm"
+                )
+            else:
+                logger.info(
+                    f"{_MODULE} schema_hash_route matched={hash_decision.matched} "
+                    f"reason={hash_decision.reason} "
+                    f"candidate_count={hash_decision.candidate_count} "
+                    f"fingerprint_version={hash_decision.fingerprint_version}"
+                )
+                scope = hash_decision.scope if hash_decision.matched else None
+        if scope is None:
+            scope = await plan_template_route_with_llm(
+                selected_task_spec,
+                data_shape,
+                generate_json,
+                registry,
+                coverage_bindings,
+                available_capability_ids,
+                card_spec,
+            )
     except TemplateRouteNotApplicable:
         raise
     except (RuntimeError, ValueError) as exc:
-        raise TemplateRouteNotApplicable(
-            f"template first-layer decision failed: {exc}"
-        ) from exc
+        raise TemplateRouteNotApplicable(f"template first-layer decision failed: {exc}") from exc
 
     try:
         return await _generate_selected_templates(
@@ -237,8 +262,7 @@ async def _generate_hybrid_body(
     generate = model_client.generate
     parameters = inspect.signature(generate).parameters
     accepts_keywords = any(
-        parameter.kind == inspect.Parameter.VAR_KEYWORD
-        for parameter in parameters.values()
+        parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in parameters.values()
     )
     kwargs = {"phase": phase, "suppress_prompt_log": True} if accepts_keywords else {}
     result = generate(messages, profile, **kwargs)
@@ -268,13 +292,9 @@ def _with_provider_template_binding_projection(
             if root is None:
                 continue
             data = schema.get("data")
-            component_projection = (
-                data.pop(component_id, None) if isinstance(data, dict) else None
-            )
+            component_projection = data.pop(component_id, None) if isinstance(data, dict) else None
             if isinstance(component_projection, dict):
-                projection_path = (
-                    f"{root.rstrip('/')}/_templateProjection/{component_id}"
-                )
+                projection_path = f"{root.rstrip('/')}/_templateProjection/{component_id}"
                 _set_pointer_value(schema, projection_path, component_projection)
                 changed = True
             for binding in definition.bindings.values():
@@ -359,8 +379,7 @@ def _set_pointer_parts(current: Any, parts: tuple[str, ...], value: Any) -> None
 
 def _pointer_parts(pointer: str) -> tuple[str, ...]:
     return tuple(
-        part.replace("~1", "/").replace("~0", "~")
-        for part in pointer.removeprefix("/").split("/")
+        part.replace("~1", "/").replace("~0", "~") for part in pointer.removeprefix("/").split("/")
     )
 
 
