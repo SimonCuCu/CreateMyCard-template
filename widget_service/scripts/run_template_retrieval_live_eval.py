@@ -24,6 +24,15 @@ import certifi
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "cloud"))
 
+_MAX_JSON_RETRIES = 2
+_JSON_RETRY_MESSAGE = {
+    "role": "user",
+    "content": (
+        "上一次输出无法解析。请重新回答：只输出一个合法 JSON 对象，"
+        "严格遵守上面给出的 schema，不要输出解释、Markdown、代码围栏或其它文字。"
+    ),
+}
+
 from models.generation import CandidateDataBinding, TaskSpec  # noqa: E402
 from services.template_generation.engine.advanced.data_shape import extract_data_shape  # noqa: E402
 from services.template_generation.engine.advanced.models import TemplateRetrievalQuery  # noqa: E402
@@ -94,7 +103,7 @@ def _call_api(
     api_key: str,
     base_url: str,
     model: str,
-) -> tuple[dict[str, Any], dict[str, Any] | None]:
+) -> tuple[str, dict[str, Any] | None, str | None]:
     payload = json.dumps(
         {
             "model": model,
@@ -114,7 +123,8 @@ def _call_api(
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     with urllib.request.urlopen(request, timeout=90, context=ssl_context) as response:
         body = json.load(response)
-    return _parse_json_object(body["choices"][0]["message"]["content"]), body.get("usage")
+    choice = body["choices"][0]
+    return choice["message"].get("content", ""), body.get("usage"), choice.get("finish_reason")
 
 
 def _field_sets(value: dict[str, tuple[str, ...]]) -> set[tuple[str, str]]:
@@ -138,13 +148,45 @@ async def _evaluate_case(
         {item.capabilityId: tuple(item.candidateOutputFields) for item in bindings},
     )
     result: dict[str, Any] = {"id": case["id"], "expectedMatched": case["expectedMatched"]}
-    try:
-        async with semaphore:
-            raw, usage = await asyncio.to_thread(_call_api, prompt, api_key, base_url, model)
-        query = TemplateRetrievalQuery.model_validate(raw)
-        result.update({"llmValid": True, "query": query.model_dump(by_alias=True), "usage": usage})
-    except Exception as exc:  # output is an evaluation observation, not a production error path
-        result.update({"llmValid": False, "error": f"{type(exc).__name__}: {exc}"})
+    raw_responses: list[str] = []
+    finish_reasons: list[str | None] = []
+    last_error: Exception | None = None
+    for attempt in range(_MAX_JSON_RETRIES + 1):
+        attempt_prompt = prompt if attempt == 0 else [*prompt, _JSON_RETRY_MESSAGE]
+        try:
+            async with semaphore:
+                raw, usage, finish_reason = await asyncio.to_thread(
+                    _call_api, attempt_prompt, api_key, base_url, model
+                )
+            raw_responses.append(raw)
+            finish_reasons.append(finish_reason)
+            parsed = _parse_json_object(raw)
+            query = TemplateRetrievalQuery.model_validate(parsed)
+            result.update(
+                {
+                    "llmValid": True,
+                    "query": query.model_dump(by_alias=True),
+                    "usage": usage,
+                    "rawResponse": raw,
+                    "rawResponses": raw_responses,
+                    "finishReason": finish_reason,
+                    "finishReasons": finish_reasons,
+                    "retryCount": attempt,
+                }
+            )
+            break
+        except Exception as exc:  # output is an evaluation observation, not a production error path
+            last_error = exc
+    else:
+        result.update(
+            {
+                "llmValid": False,
+                "error": f"{type(last_error).__name__}: {last_error}",
+                "rawResponses": raw_responses,
+                "finishReasons": finish_reasons,
+                "retryCount": _MAX_JSON_RETRIES,
+            }
+        )
         return result
 
     try:
