@@ -6,14 +6,15 @@
   allowedParentComponents: ["Column", "Row", "List", "Stack"],
   bindings: {
     appName: { path: "/appUsage/appName", type: "string" },
+    durationText: { path: "/appUsage/durationText", type: "string" },
     updatedAt: { path: "/updatedAt", type: "string" }
   },
   params: {
     durationPrimaryValueText: {
-      type: "string", required: true, sourcePaths: ["/appUsage/durationText"]
+      type: "string", sourcePaths: ["/appUsage/durationText"]
     },
     durationPrimaryUnitText: {
-      type: "string", required: true, sourcePaths: ["/appUsage/durationText"]
+      type: "string", sourcePaths: ["/appUsage/durationText"]
     },
     durationSecondaryValueText: { type: "string", sourcePaths: ["/appUsage/durationText"] },
     durationSecondaryUnitText: { type: "string", sourcePaths: ["/appUsage/durationText"] },
@@ -22,7 +23,7 @@
   limits: { maxNodes: 18, maxDepth: 6 }
 })
 
-#Variant("singleApp", { sizes: ["2x2"], roles: ["hero"], requires: ["appName"], requiresParams: ["durationPrimaryValueText", "durationPrimaryUnitText"] })
+#Variant("singleApp", { sizes: ["2x2"], roles: ["hero"], requires: ["appName", "durationText"] })
 Column("compact", {
   _advancedComponent: "AppUsageOverview", width: "matchParent", height: "matchParent",
   itemMargin: 4, justifyContent: "start", alignItems: "start", clip: true,
@@ -49,12 +50,8 @@ Column("compact", {
       width: "matchParent", itemMargin: 2, justifyContent: "start", alignItems: "bottom",
       clip: true, constraintSize: { minWidth: 0, minHeight: 0 }
     },
-      Text(Param("durationPrimaryValueText"), "title", {
+      Text(Bind("durationText"), "title", {
         fontSize: 30, minFontSize: 30, fontWeight: 700, fontColor: "#E6000000",
-        maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 }
-      }),
-      Text(Param("durationPrimaryUnitText"), "subtitle", {
-        fontSize: 12, minFontSize: 12, fontWeight: 400, fontColor: "#99000000",
         maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 }
       })
     )
@@ -94,7 +91,7 @@ Column("compact", {
 )
 #EndVariant
 
-#Variant("singleAppWide", { sizes: ["2x4"], roles: ["hero"], requires: ["appName"], requiresParams: ["durationPrimaryValueText", "durationPrimaryUnitText"] })
+#Variant("singleAppWide", { sizes: ["2x4"], roles: ["hero"], requires: ["appName", "durationText"] })
 Row("between", {
   _advancedComponent: "AppUsageOverview", width: "matchParent", height: "matchParent",
   itemMargin: 8, justifyContent: "center", alignItems: "center", clip: true,
@@ -112,8 +109,7 @@ Row("between", {
     ),
     Column("compact", { layoutWeight: 1, itemMargin: 4, justifyContent: "center", alignItems: "start", clip: true, constraintSize: { minWidth: 0, minHeight: 0 } },
       Row("between", { width: "matchParent", itemMargin: 2, justifyContent: "start", alignItems: "bottom", clip: true, constraintSize: { minWidth: 0, minHeight: 0 } },
-        Text(Param("durationPrimaryValueText"), "title", { fontSize: 30, minFontSize: 30, fontWeight: 700, fontColor: "#E6000000", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } }),
-        Text(Param("durationPrimaryUnitText"), "subtitle", { fontSize: 12, minFontSize: 12, fontWeight: 400, fontColor: "#99000000", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } })
+        Text(Bind("durationText"), "title", { fontSize: 30, minFontSize: 30, fontWeight: 700, fontColor: "#E6000000", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } })
       )
     )
   ),
