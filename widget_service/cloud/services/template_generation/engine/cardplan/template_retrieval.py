@@ -142,10 +142,11 @@ def _record_matches(
     card_spec: dict[str, Any],
 ) -> bool:
     capability_matches = all(token.capability_id == record.capability_id for token in query_tokens)
-    theme_matches = query.theme_id in record.compatible_theme_ids
     size_matches = task_spec.size in record.supported_card_sizes
     role_matches = "hero" in record.supported_roles
-    basic_constraints_match = capability_matches and theme_matches and size_matches
+    # Theme compatibility is intentionally not a retrieval gate in this experiment.
+    # Capability, fields, size, role and Provider admission remain hard constraints.
+    basic_constraints_match = capability_matches and size_matches
     if not basic_constraints_match or not role_matches:
         return False
     if not query_tokens.issubset(record.required_field_tokens):
