@@ -141,15 +141,18 @@ def test_optional_fields_are_not_expanded_into_variant_combinations() -> None:
     assert all(token.path != "/updatedAt" for token in record.required_field_tokens)
 
 
-def test_theme_mismatch_is_a_retrieval_miss() -> None:
-    with pytest.raises(TemplateRetrievalMiss, match="no CardTpl Variant"):
-        retrieve_template_variant(
-            _query("/current/temperatureText", theme_id="meeting-paper-neutral"),
-            _weather_task(),
-            get_cardplan_registry(),
-            (_weather_binding(),),
-            _weather_card_spec(),
-        )
+def test_theme_mismatch_does_not_block_field_match() -> None:
+    match = retrieve_template_variant(
+        _query("/current/temperatureText", theme_id="meeting-paper-neutral"),
+        _weather_task(),
+        get_cardplan_registry(),
+        (_weather_binding(),),
+        _weather_card_spec(),
+    )
+
+    assert match.theme_id == "meeting-paper-neutral"
+    assert match.template_id == "WeatherOverview@1"
+    assert match.variant_name == "hero"
 
 
 def test_task_spec_type_mismatch_is_a_retrieval_miss() -> None:
