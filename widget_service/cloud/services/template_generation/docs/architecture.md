@@ -15,12 +15,11 @@ generateWidgetCardCompactDsl
        │    └─ 原始 Compact 流程
        └─ create
             ├─ 准备 dev 能力裁决、CardSpec、TaskSpec
-            ├─ CLI DataSchema Hash：唯一命中时选择 Theme 和业务模板，跳过第一层 LLM
-            │    └─ 未命中、歧义、不兼容或异常 → 原第一层 LLM
-            ├─ 第一层 LLM 回退：从候选字段中提取 query 必显字段，选择 Theme 和业务模板
-            ├─ 服务端完整覆盖校验
+            ├─ 第一层 LLM：只从候选字段中提取 query 必显字段并选择 Theme
+            ├─ CardTpl Variant 字段 Token 集合检索
             │    ├─ 必显字段不属于候选或模板未消费任一必显字段 → 原始 Compact 流程
-            │    └─ 全部覆盖 → 锁定模板路由
+            │    └─ Theme、字段、类型、尺寸和准入全部匹配 → 锁定一个模板 Variant
+            ├─ 检索外适配层：由模板映射内部业务组件范围
             ├─ 第二层 LLM：只生成受限布局和模板调用
             ├─ 服务端解析、参数校验、模板展开
             ├─ 内部 A2UI 适配当前 dev Form profile
@@ -35,9 +34,8 @@ generateWidgetCardTerseDslNested2
   └─ route_terse_nested2_generation
        ├─ edit → failed
        └─ create
-            ├─ CLI DataSchema Hash 唯一命中时跳过第一层 LLM
-            │    └─ 未命中、歧义、不兼容或异常 → 原第一层 LLM
-            ├─ 第一层 LLM 回退提取 query 必显字段并执行服务端完整覆盖校验
+            ├─ 第一层 LLM 只提取 query 必显字段和 Theme
+            ├─ CardTpl Variant 字段 Token 集合检索
             │    └─ 未匹配、字段未完整覆盖或模型不可用 → failed
             ├─ 第二层 LLM、参数校验和模板展开
             │    └─ 任一失败 → failed
@@ -67,21 +65,21 @@ generateWidgetCardTerseDslNested2
 |---|---|---|
 | edit 请求 | 原始流程 | 二次更新不重新选择模板 |
 | 无真实模型运行时 | 原始流程 | 保持 dev mock 和既有测试行为 |
-| Schema Hash 未命中或异常 | 原第一层 LLM | Hash 只替代可证明的唯一模板选择 |
-| 第一层拒绝或异常 | 原始流程 | 尚未承诺模板可完整表达 |
-| 确定性覆盖失败 | 原始流程 | 任一用户选定字段无法由模板表达 |
+| 第一层输出非法或异常 | 原始流程 | 用户强诉求无法形成可信检索输入 |
+| Variant 检索未命中或异常 | 原始流程 | 内部不重试、不改写诉求、不切换检索方式 |
 | 第二层或模板编译失败 | 返回 failed | 模板路由已经锁定，禁止静默换实现 |
 | Compact 归档或 Validator 失败 | 返回 failed | 禁止保存无法稳定编辑的半成品 |
 
-`candidateOutputFields` 是可用候选集合，不是强制展示集合。第一层只能从候选集合中输出 query 实际要求的
-必显字段；服务端随后证明这些字段被所选模板直接绑定或作为派生参数来源消费。模板可以为了保持原始视觉
-额外展示其必需事实，但不得遗漏 query 必显事实。
+`candidateOutputFields` 是可用候选集合，不是强制展示集合。第一层只输出 `themeId` 与 query 实际要求的
+`requiredOutputFieldsByCapability`，不判断模板是否可用，也不选择模板或高级组件。无法完整映射强诉求或涉及
+多个数据能力时输出空字段集合，服务端据此判定未匹配。
 
-Schema Hash 默认开启。Provider Bundle 加载时保留已通过 Draft 2020-12 校验的 `outputSchema`；运行时按
-CardSpec `writeResultTo` 取得对应 TaskSpec Schema 子树，忽略 sampleValue、description 和字段顺序后计算
-版本化 SHA-256。Provider 完整 Schema 会先投影到运行时字段集合，再比较 Hash 与 canonical schema。只有
-capability、结构、尺寸、模板准入和完整覆盖均得到唯一结果时才跳过第一层 LLM；其它结果统一回退原第一层
-LLM，不直接进入原始 Compact 回退或 Terse 失败。
+检索索引随 Registry 加载到内存。每个 CardTpl Variant 的 required binding 和 required 非素材参数来源被
+规范化为 `(capabilityId, JSON Pointer, type)` 字段 Token。匹配要求“用户强诉求字段集合 ⊆ Variant required
+字段集合 ⊆ TaskSpec 实际可用字段集合”，并独立校验 Theme、尺寸、hero role 与 Provider admission。optional
+字段不进入 required 集合，因此不枚举 `2^n` 组合；集合使用 `frozenset` 直接判断，不计算整 Schema Hash。
+多个结果按额外 required 字段最少、模板 ID、Variant 名稳定排序后只返回第一个。检索结果只包含 Theme、模板
+和 Variant，高级组件由检索外适配层映射。
 
 `before_model_call` 由门面包装为单次通知。第一层已经触发通知时，即使回退原始模型，也不会重复下发开始事件。
 

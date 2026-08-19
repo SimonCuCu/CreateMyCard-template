@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.logger import logger
-from config.config import get_settings
 from models.generation import CandidateDataBinding, TaskSpec
 from services.protocol_registry import (
     TERSE_DSL_NESTED2_PROFILE_ID,
@@ -22,8 +21,8 @@ from services.template_generation.engine.advanced.content_selectors import (
 from services.template_generation.engine.advanced.data_shape import extract_data_shape
 from services.template_generation.engine.advanced.scope_planner import (
     TemplateRouteNotApplicable,
-    plan_template_route_with_hash,
-    plan_template_route_with_llm,
+    adapt_template_match_to_scope,
+    extract_template_retrieval_query_with_llm,
     resolve_available_capability_ids,
 )
 from services.template_generation.engine.advanced.ux_mixed_framer import (
@@ -38,6 +37,11 @@ from services.template_generation.engine.cardplan.registry import (
     CardPlanRegistry,
     get_cardplan_registry,
 )
+from services.template_generation.engine.cardplan.template_retrieval import (
+    TemplateMatch,
+    TemplateRetrievalMiss,
+    retrieve_template_variant,
+)
 from services.template_generation.engine.terse_dsl_nested2_converter import (
     TerseDslNested2ConversionError,
 )
@@ -47,7 +51,7 @@ _MAX_BODY_REPAIRS = 2
 
 
 class TemplateGenerationError(RuntimeError):
-    """第一层已确认模板可用后，模板生成或展开失败。"""
+    """检索已锁定模板 Variant 后，模板生成或展开失败。"""
 
 
 @dataclass(frozen=True)
@@ -105,45 +109,38 @@ async def generate_template_a2ui(
         return await model_client.generate_json(prompt, phase=phase)
 
     try:
-        scope = None
-        if get_settings().enable_template_schema_hash:
-            try:
-                hash_decision = plan_template_route_with_hash(
-                    selected_task_spec,
-                    data_shape,
-                    registry,
-                    coverage_bindings,
-                    available_capability_ids,
-                    card_spec,
-                )
-            except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
-                logger.warning(
-                    f"{_MODULE} schema_hash_route matched=False "
-                    f"reason=index_unavailable exception_type={type(exc).__name__} "
-                    "fallback=first_layer_llm"
-                )
-            else:
-                logger.info(
-                    f"{_MODULE} schema_hash_route matched={hash_decision.matched} "
-                    f"reason={hash_decision.reason} "
-                    f"candidate_count={hash_decision.candidate_count} "
-                    f"fingerprint_version={hash_decision.fingerprint_version}"
-                )
-                scope = hash_decision.scope if hash_decision.matched else None
-        if scope is None:
-            scope = await plan_template_route_with_llm(
-                selected_task_spec,
-                data_shape,
-                generate_json,
-                registry,
-                coverage_bindings,
-                available_capability_ids,
-                card_spec,
-            )
+        query = await extract_template_retrieval_query_with_llm(
+            selected_task_spec,
+            data_shape,
+            generate_json,
+            registry,
+            coverage_bindings,
+        )
+        match = retrieve_template_variant(
+            query,
+            selected_task_spec,
+            registry,
+            coverage_bindings,
+            card_spec,
+        )
+        scope = adapt_template_match_to_scope(
+            match,
+            selected_task_spec,
+            data_shape,
+            registry,
+            available_capability_ids,
+        )
+        logger.info(
+            f"{_MODULE} template_retrieval matched=True "
+            f"template_id={match.template_id} variant={match.variant_name}"
+        )
+    except TemplateRetrievalMiss as exc:
+        logger.info(f"{_MODULE} template_retrieval matched=False reason={exc}")
+        raise TemplateRouteNotApplicable(str(exc)) from exc
     except TemplateRouteNotApplicable:
         raise
     except (RuntimeError, ValueError) as exc:
-        raise TemplateRouteNotApplicable(f"template first-layer decision failed: {exc}") from exc
+        raise TemplateRouteNotApplicable(f"template retrieval decision failed: {exc}") from exc
 
     try:
         return await _generate_selected_templates(
@@ -151,6 +148,7 @@ async def generate_template_a2ui(
             card_spec=card_spec,
             effective_capability_ids=effective_capability_ids,
             scope=scope,
+            match=match,
             registry=registry,
             model_client=model_client,
         )
@@ -166,6 +164,7 @@ async def _generate_selected_templates(
     card_spec: dict[str, Any],
     effective_capability_ids: set[str],
     scope: Any,
+    match: TemplateMatch,
     registry: CardPlanRegistry,
     model_client: Any,
 ) -> TemplateEngineOutput:
@@ -186,6 +185,8 @@ async def _generate_selected_templates(
         card_spec=card_spec,
         scope=scope,
         registry=registry,
+        selected_template_id=match.template_id,
+        selected_variant_name=match.variant_name,
     )
     protocol_profile = A2UIProtocolRegistry.read_design_protocol_profile(
         TERSE_DSL_NESTED2_PROFILE_ID

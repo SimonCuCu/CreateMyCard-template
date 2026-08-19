@@ -39,6 +39,7 @@ class HybridBodyContract(StrictModel):
     allowed_design_tokens: tuple[str, ...]
     allowed_layout_tokens: tuple[str, ...]
     allowed_template_ids: tuple[str, ...]
+    allowed_template_variants: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     required_template_groups: tuple[tuple[str, ...], ...] = ()
     allowed_asset_sources: tuple[str, ...]
     asset_semantic_tags_by_source: dict[str, tuple[str, ...]] = Field(default_factory=dict)
@@ -109,6 +110,10 @@ class TemplateVariant(StrictModel):
     )
     required_bindings: tuple[str, ...] = Field(default=(), alias="requiredBindings")
     optional_bindings: tuple[str, ...] = Field(default=(), alias="optionalBindings")
+    required_data_fields: tuple[TemplateBinding, ...] = Field(
+        default=(),
+        alias="requiredDataFields",
+    )
     root: TemplateNode
     expanded_node_budget: int = Field(alias="expandedNodeBudget", gt=0)
     expanded_depth_budget: int = Field(alias="expandedDepthBudget", gt=0)

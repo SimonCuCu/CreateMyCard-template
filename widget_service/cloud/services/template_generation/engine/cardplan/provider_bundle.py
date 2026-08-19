@@ -95,18 +95,7 @@ class ProviderManifest(StrictModel):
 class LoadedProviderBundle:
     manifest: ProviderManifest
     templates: tuple[TemplateDefinition, ...]
-    schema_records: tuple[ProviderSchemaRecord, ...]
     bundle_digest: str
-
-
-@dataclass(frozen=True)
-class ProviderSchemaRecord:
-    provider_id: str
-    provider_version: str
-    capability_id: str
-    schema_version: str
-    template_ids: tuple[str, ...]
-    output_schema: dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -124,33 +113,31 @@ class _CompiledParameters:
     schema: dict[str, Any]
     asset_semantic_tags: dict[str, tuple[str, ...]]
     required_names: tuple[str, ...]
+    source_fields_by_name: dict[str, tuple[TemplateBinding, ...]]
 
 
 def load_provider_templates(providers_root: Path) -> tuple[TemplateDefinition, ...]:
     """Compile every registered Provider Bundle below one trusted source root."""
-    definitions, _ = load_provider_template_catalog(providers_root)
-    return definitions
+    return load_provider_template_catalog(providers_root)
 
 
 def load_provider_template_catalog(
     providers_root: Path,
-) -> tuple[tuple[TemplateDefinition, ...], tuple[ProviderSchemaRecord, ...]]:
-    """Load trusted Provider Templates and their validated data schemas once."""
+) -> tuple[TemplateDefinition, ...]:
+    """Load trusted Provider Templates once."""
     if not providers_root.is_dir():
-        return (), ()
+        return ()
     definitions: list[TemplateDefinition] = []
-    schema_records: list[ProviderSchemaRecord] = []
     seen: set[str] = set()
     manifests = sorted(providers_root.glob("*/provider.json"))
     for manifest_path in manifests:
         bundle = load_provider_bundle(manifest_path.parent)
-        schema_records.extend(bundle.schema_records)
         for definition in bundle.templates:
             if definition.wire_id in seen:
                 raise ValueError(f"duplicate Provider Template: {definition.wire_id}")
             seen.add(definition.wire_id)
             definitions.append(definition)
-    return tuple(definitions), tuple(schema_records)
+    return tuple(definitions)
 
 
 def load_provider_bundle(bundle_root: Path) -> LoadedProviderBundle:
@@ -172,17 +159,6 @@ def load_provider_bundle(bundle_root: Path) -> LoadedProviderBundle:
     owners = _template_owners(manifest.capabilities)
     bundle_digest = _bundle_digest(root, manifest)
     definitions: list[TemplateDefinition] = []
-    schema_records = tuple(
-        ProviderSchemaRecord(
-            provider_id=manifest.provider_id,
-            provider_version=manifest.provider_version,
-            capability_id=capability.capability_id,
-            schema_version=capability.data_schema.version,
-            template_ids=capability.templates,
-            output_schema=_load_data_schema(root, capability),
-        )
-        for capability in manifest.capabilities
-    )
     for wire_id, entry in template_entries.items():
         capability = owners.get(wire_id)
         if capability is None:
@@ -210,7 +186,6 @@ def load_provider_bundle(bundle_root: Path) -> LoadedProviderBundle:
     return LoadedProviderBundle(
         manifest,
         tuple(definitions),
-        schema_records,
         bundle_digest,
     )
 
@@ -263,6 +238,7 @@ def compile_card_template(
             bindings=bindings,
             parameters_schema=parameters.schema,
             globally_required=parameters.required_names,
+            parameter_source_fields=parameters.source_fields_by_name,
             default_limits=default_limits,
             previous_variants=variants_by_name,
         )
@@ -315,6 +291,7 @@ def _compile_variant(
     bindings: dict[str, TemplateBinding],
     parameters_schema: dict[str, Any],
     globally_required: tuple[str, ...],
+    parameter_source_fields: dict[str, tuple[TemplateBinding, ...]],
     default_limits: tuple[int, int],
     previous_variants: dict[str, TemplateVariant],
 ) -> TemplateVariant:
@@ -435,6 +412,12 @@ def _compile_variant(
             "supportedRoles": _metadata_strings(metadata, "roles"),
             "requiredBindings": required_bindings,
             "optionalBindings": tuple(sorted(guarded_bindings - set(required_bindings))),
+            "requiredDataFields": _required_variant_data_fields(
+                required_bindings,
+                required_params,
+                bindings,
+                parameter_source_fields,
+            ),
             "root": root.model_dump(),
             "expandedNodeBudget": max_nodes,
             "expandedDepthBudget": max_depth,
@@ -600,6 +583,7 @@ def _compile_parameters(
     properties: dict[str, dict[str, Any]] = {}
     asset_tags: dict[str, tuple[str, ...]] = {}
     required: list[str] = []
+    source_fields_by_name: dict[str, tuple[TemplateBinding, ...]] = {}
     for name, raw_parameter in payload.items():
         if not isinstance(name, str) or not isinstance(raw_parameter, dict):
             raise ValueError("Provider Template parameter is invalid")
@@ -620,7 +604,11 @@ def _compile_parameters(
                 raise ValueError(f"invalid Provider Template asset tags: {name}")
             asset_tags[name] = tuple(tags)
         elif source_paths is not None:
-            _validate_parameter_source_paths(name, source_paths, output_schema)
+            source_fields_by_name[name] = _parameter_source_fields(
+                name,
+                source_paths,
+                output_schema,
+            )
         if parameter.get("type") not in {"string", "integer", "number", "boolean"}:
             raise ValueError(f"invalid Provider Template parameter type: {name}")
         properties[name] = parameter
@@ -635,25 +623,47 @@ def _compile_parameters(
         "additionalProperties": False,
     }
     Draft202012Validator.check_schema(schema)
-    return _CompiledParameters(schema, asset_tags, tuple(required))
+    return _CompiledParameters(
+        schema,
+        asset_tags,
+        tuple(required),
+        source_fields_by_name,
+    )
 
 
-def _validate_parameter_source_paths(
+def _parameter_source_fields(
     name: str,
     source_paths: Any,
     output_schema: dict[str, Any],
-) -> None:
+) -> tuple[TemplateBinding, ...]:
     if not isinstance(source_paths, list) or not source_paths:
         raise ValueError(f"Provider Template parameter sourcePaths must be non-empty: {name}")
     if any(not isinstance(source_path, str) for source_path in source_paths):
         raise ValueError(f"Provider Template parameter sourcePaths must be strings: {name}")
     if len(source_paths) != len(set(source_paths)):
         raise ValueError(f"Provider Template parameter sourcePaths must be unique: {name}")
+    fields: list[TemplateBinding] = []
     for source_path in source_paths:
         if not _binding_pointer_is_encodable(source_path):
             raise ValueError(f"Provider Template parameter sourcePath is invalid: {name}")
-        if _schema_leaf(output_schema, source_path) is None:
+        leaf = _schema_leaf(output_schema, source_path)
+        if leaf is None:
             raise ValueError(f"Provider Template parameter sourcePath is invalid: {name}")
+        fields.append(TemplateBinding(path=source_path, type=leaf.get("type")))
+    return tuple(fields)
+
+
+def _required_variant_data_fields(
+    required_bindings: tuple[str, ...],
+    required_params: tuple[str, ...],
+    bindings: dict[str, TemplateBinding],
+    parameter_source_fields: dict[str, tuple[TemplateBinding, ...]],
+) -> tuple[dict[str, Any], ...]:
+    fields = [bindings[name] for name in required_bindings]
+    for name in required_params:
+        fields.extend(parameter_source_fields.get(name, ()))
+    unique = {(field.path, field.data_type): field for field in fields}
+    return tuple(field.model_dump(by_alias=True) for _, field in sorted(unique.items()))
 
 
 def _binding_pointer_is_encodable(pointer: str) -> bool:

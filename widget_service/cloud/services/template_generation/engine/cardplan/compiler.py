@@ -864,6 +864,11 @@ def _expand_call(
             ) from exc
         variant = definition.variants[0]
         state.template_variant_normalizations += 1
+    allowed_variants = contract.allowed_template_variants.get(wire_id)
+    if allowed_variants and variant.size not in allowed_variants:
+        raise TerseDslNested2ConversionError(
+            f"Template variant is not selected: {wire_id}/{variant.size}"
+        )
     errors = sorted(Draft202012Validator(variant.parameters_schema).iter_errors(params), key=str)
     if errors:
         raise TerseDslNested2ConversionError(

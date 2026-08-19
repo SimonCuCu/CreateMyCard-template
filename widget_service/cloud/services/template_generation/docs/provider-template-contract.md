@@ -47,16 +47,16 @@ durationPrimaryValueText: {
 }
 ```
 
-`sourcePaths` 只允许指向本能力 `outputSchema` 的叶子字段；素材参数不允许声明。模板覆盖集合等于 Variant
-直接绑定路径与其参数来源路径的并集。
+`sourcePaths` 只允许指向本能力 `outputSchema` 的叶子字段；素材参数不允许声明。Variant 检索字段集合只
+包含 `requires` 对应的直接绑定路径，以及 required 非素材参数的来源路径；optional 字段不参与匹配。
 
 ## 完整覆盖要求
 
 第一层 LLM 只能提出候选，服务端必须再次确认：
 
 - 每个 `candidateDataBinding.capabilityId` 都有可用 Provider 模板。
-- 第一层输出的 query 必显字段非空，且全部属于对应能力的 `candidateOutputFields`。
-- 每个 query 必显字段都被所选一个或多个模板直接绑定或作为派生参数来源消费。
+- 第一层输出的 query 必显字段非空、只属于一个能力，且全部属于对应能力的 `candidateOutputFields`。
+- 每个 query 必显字段都属于同一个 CardTpl Variant 的 required 字段集合。
 - 所选 Variant 的必需绑定能从 TaskSpec 与 CardSpec 唯一解析。
 - 模板参数只来自可信事实、批准事件和批准素材。
 - 任一字段不满足时，整个模板判断失败，不能用模板只展示一部分后继续。

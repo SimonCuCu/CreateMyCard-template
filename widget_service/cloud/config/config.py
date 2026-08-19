@@ -98,7 +98,6 @@ class Settings(BaseSettings):
     model_failure_retry_jitter_ratio: float = Field(default=0.2, ge=0.0, lt=1.0)
     enable_validation_failure_retry: bool = False
     validation_failure_max_repair_attempts: int = Field(default=1, ge=1, le=10)
-    enable_template_schema_hash: bool = True
     enable_widget_edit: bool = False
     enable_widget_directive_commands: bool = False
     artifact_base_url: str = "https://obs.todo.local/widget"

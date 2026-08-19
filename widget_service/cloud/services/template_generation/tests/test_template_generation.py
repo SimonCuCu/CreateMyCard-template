@@ -8,7 +8,6 @@ from typing import Any
 import pytest
 
 from api.schemas import GenerateWidgetCardRequest
-from config.config import get_settings
 from core.errors import GenerationStatus
 from models.generation import CandidateDataBinding, EventAction, TaskSpec
 from models.service import ArtifactSaveResult
@@ -51,10 +50,7 @@ from services.template_generation.engine.pipeline import (
 from services.template_generation.engine.terse_dsl_nested2_converter import Nested2Node
 from services.widget_generation_service import WidgetGenerationService
 
-_WEATHER_BODY = (
-    'SingleFocusLayout(Template("WeatherOverview@1","heroIcon",'
-    '{"conditionIcon":"resources/base/media/icon_weather1.svg"}));'
-)
+_WEATHER_BODY = 'SingleFocusLayout(Template("WeatherOverview@1","hero",{}));'
 _WEATHER_TEMPLATE_FIELDS = (
     "/location/districtName",
     "/current/temperatureText",
@@ -291,10 +287,8 @@ async def test_derived_parameter_source_field_is_counted_as_template_coverage():
     class AppUsageTemplateModel:
         async def generate_json(self, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
             return {
-                "routeVersion": "template-route-decision/2",
-                "templateUsable": True,
+                "routeVersion": "template-retrieval-query/1",
                 "themeId": "digital-wellbeing-neutral-dark",
-                "advancedComponentIds": ["AppUsageOverview"],
                 "requiredOutputFieldsByCapability": {
                     "GetAppUsageDuration": ["/appUsage/durationText"],
                 },
@@ -353,10 +347,8 @@ class _FixedTemplateModel:
 
     async def generate_json(self, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
         return {
-            "routeVersion": "template-route-decision/2",
-            "templateUsable": True,
+            "routeVersion": "template-retrieval-query/1",
             "themeId": self.theme_id,
-            "advancedComponentIds": [self.component_id],
             "requiredOutputFieldsByCapability": {
                 self.capability_id: list(self.required_fields),
             },
@@ -558,18 +550,18 @@ class WeatherTemplateModel:
     def __init__(
         self,
         required_fields: tuple[str, ...] = _WEATHER_TEMPLATE_FIELDS,
+        body: str = _WEATHER_BODY,
     ) -> None:
         self.body_called = False
         self.route_called = False
         self.required_fields = required_fields
+        self.body = body
 
     async def generate_json(self, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
         self.route_called = True
         return {
-            "routeVersion": "template-route-decision/2",
-            "templateUsable": True,
+            "routeVersion": "template-retrieval-query/1",
             "themeId": "family-weather-care-blue",
-            "advancedComponentIds": ["WeatherOverview"],
             "requiredOutputFieldsByCapability": {
                 "ViewWeather": list(self.required_fields),
             },
@@ -577,7 +569,7 @@ class WeatherTemplateModel:
 
     async def generate(self, *_args: Any, **_kwargs: Any) -> str:
         self.body_called = True
-        return _WEATHER_BODY
+        return self.body
 
 
 def _policy() -> GenerationRoutePolicy:
@@ -731,7 +723,7 @@ async def test_weather_template_generates_a2ui_and_compact_artifact(monkeypatch)
     assert response.status == GenerationStatus.SUCCESS
     assert response.artifactUrl == "https://artifact.test/weather-template"
     assert starts == ["2x2"]
-    assert model.route_called is False
+    assert model.route_called is True
     assert model.body_called is True
     assert captured["compact"]
     assert "{{ ${/data/weather/current/condition}" in captured["compact"]
@@ -793,7 +785,7 @@ async def test_uncovered_requested_field_rejects_template_before_body_generation
         ],
     )
 
-    with pytest.raises(TemplateRouteNotApplicable, match="do not cover every"):
+    with pytest.raises(TemplateRouteNotApplicable, match="absent from TaskSpec"):
         await generate_template_a2ui(
             _weather_task_spec(),
             _weather_card_spec(),
@@ -835,7 +827,7 @@ async def test_unused_candidate_fields_do_not_block_query_required_weather_field
 
 
 @pytest.mark.asyncio
-async def test_schema_hash_miss_falls_back_to_first_layer_llm():
+async def test_unrelated_task_spec_field_does_not_block_variant_retrieval():
     model = WeatherTemplateModel()
     task_spec = _weather_task_spec()
     task_spec.dataModelSchema["data"]["weather"]["unknown"] = {
@@ -863,16 +855,12 @@ async def test_schema_hash_miss_falls_back_to_first_layer_llm():
 
 
 @pytest.mark.asyncio
-async def test_schema_hash_error_falls_back_to_first_layer_llm(monkeypatch):
-    model = WeatherTemplateModel()
-
-    def raise_hash_error(*_args: Any, **_kwargs: Any) -> None:
-        raise RuntimeError("broken hash index")
-
-    monkeypatch.setattr(
-        template_pipeline,
-        "plan_template_route_with_hash",
-        raise_hash_error,
+async def test_second_layer_cannot_switch_from_retrieved_variant():
+    model = WeatherTemplateModel(
+        body=(
+            'SingleFocusLayout(Template("WeatherOverview@1","heroIcon",'
+            '{"conditionIcon":"resources/base/media/icon_weather1.svg"}));'
+        )
     )
     binding = CandidateDataBinding(
         capabilityId="ViewWeather",
@@ -881,22 +869,50 @@ async def test_schema_hash_error_falls_back_to_first_layer_llm(monkeypatch):
         candidateOutputFields=list(_WEATHER_TEMPLATE_FIELDS),
     )
 
-    output = await generate_template_a2ui(
-        _weather_task_spec(),
-        _weather_card_spec(),
-        (binding,),
-        model,
-    )
+    with pytest.raises(TemplateGenerationError, match="template body validation failed"):
+        await generate_template_a2ui(
+            _weather_task_spec(),
+            _weather_card_spec(),
+            (binding,),
+            model,
+        )
 
-    assert model.route_called is True
-    assert model.body_called is True
-    assert output.template_ids == ("WeatherOverview@1",)
     assert model.body_called is True
 
 
 @pytest.mark.asyncio
-async def test_query_required_fields_must_come_from_candidates(monkeypatch):
-    monkeypatch.setattr(get_settings(), "enable_template_schema_hash", False)
+async def test_retrieval_error_does_not_retry_or_generate_body(monkeypatch):
+    model = WeatherTemplateModel()
+
+    def raise_retrieval_error(*_args: Any, **_kwargs: Any) -> None:
+        raise RuntimeError("broken retrieval index")
+
+    monkeypatch.setattr(
+        template_pipeline,
+        "retrieve_template_variant",
+        raise_retrieval_error,
+    )
+    binding = CandidateDataBinding(
+        capabilityId="ViewWeather",
+        arguments={"districtName": "青浦区", "prefectureName": "上海市"},
+        writeResultTo="/data/weather",
+        candidateOutputFields=list(_WEATHER_TEMPLATE_FIELDS),
+    )
+
+    with pytest.raises(TemplateRouteNotApplicable, match="retrieval decision failed"):
+        await generate_template_a2ui(
+            _weather_task_spec(),
+            _weather_card_spec(),
+            (binding,),
+            model,
+        )
+
+    assert model.route_called is True
+    assert model.body_called is False
+
+
+@pytest.mark.asyncio
+async def test_query_required_fields_must_come_from_candidates():
     model = WeatherTemplateModel(("/current/airQuality",))
     binding = CandidateDataBinding(
         capabilityId="ViewWeather",
@@ -905,7 +921,7 @@ async def test_query_required_fields_must_come_from_candidates(monkeypatch):
         candidateOutputFields=["/current/condition"],
     )
 
-    with pytest.raises(TemplateRouteNotApplicable, match="selected from candidateOutputFields"):
+    with pytest.raises(TemplateRouteNotApplicable, match="must come from candidates"):
         await generate_template_a2ui(
             _weather_task_spec(),
             _weather_card_spec(),

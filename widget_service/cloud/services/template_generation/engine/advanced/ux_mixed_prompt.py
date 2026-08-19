@@ -103,6 +103,8 @@ def build_ux_mixed_prompt(
     card_spec: dict[str, Any],
     scope: AdvancedScopeBrief,
     registry: CardPlanRegistry,
+    selected_template_id: str | None = None,
+    selected_variant_name: str | None = None,
 ) -> UxMixedPromptProjection:
     """复用事实、Action 和 Template 安全契约，替换旧候选与布局决策入口。"""
     available_capability_ids = _card_spec_capability_ids(card_spec)
@@ -118,9 +120,14 @@ def build_ux_mixed_prompt(
     allowed_layout_ids = resolve_scope_layout_ids(scope, task_spec, registry)
     if not allowed_layout_ids:
         raise ValueError("Advanced Scope has no compatible UX layout")
+    selected_template_ids = (
+        (selected_template_id,)
+        if selected_template_id is not None
+        else scope_template_ids(scope, registry, task_spec)
+    )
     bridge = _ScopePromptBridge(
         theme_id=scope.theme_id,
-        local_template_ids=scope_template_ids(scope, registry, task_spec),
+        local_template_ids=selected_template_ids,
         primary_domain=components[0].domain_id,
         advanced_component_ids=scope.advanced_component_ids,
     )
@@ -131,6 +138,16 @@ def build_ux_mixed_prompt(
         registry=registry,
         ux_layout_root_ids=allowed_layout_ids,
     )
+    contract = base.contract
+    if selected_template_id is not None and selected_variant_name is not None:
+        contract = contract.model_copy(
+            update={
+                "allowed_template_ids": (selected_template_id,),
+                "allowed_template_variants": {
+                    selected_template_id: (selected_variant_name,),
+                },
+            }
+        )
     template_components = tuple(
         component for component in components if component.implementation == "template"
     )
@@ -162,9 +179,9 @@ def build_ux_mixed_prompt(
                 _WEATHER_BUILTIN_ASSETS[2]: ("weather", "condition", "cold", "snow"),
             }
         )
-    required_literals = base.contract.required_literals
-    protected_literals = base.contract.protected_literals
-    required_numbers = base.contract.required_numbers
+    required_literals = contract.required_literals
+    protected_literals = contract.protected_literals
+    required_numbers = contract.required_numbers
     if has_weather:
         weather_facts = extract_weather_overview_facts(task_spec.dataModelSchema)
         if weather_facts is None:
@@ -261,7 +278,7 @@ def build_ux_mixed_prompt(
         item for item in protected_literals if item not in provider_owned_values
     )
     required_numbers = tuple(item for item in required_numbers if item not in provider_owned_values)
-    contract = base.contract.model_copy(
+    contract = contract.model_copy(
         update={
             "required_template_groups": required_template_groups,
             "allowed_components": tuple(
@@ -320,6 +337,8 @@ def build_ux_mixed_prompt(
             "allowedUxLayouts=" + json.dumps(allowed_layout_ids, ensure_ascii=False),
             "requiredLocalTemplateGroups="
             + json.dumps(required_template_groups, ensure_ascii=False),
+            "allowedTemplateVariants="
+            + json.dumps(contract.allowed_template_variants, ensure_ascii=False),
             "directBusinessComponents=" + json.dumps(direct_components, ensure_ascii=False),
             "业务高级组件字段由服务端绑定到 TaskSpec.dataModelSchema 的端侧数据路径；"
             "最终有效 TerseDSL 使用完整 `${data.weather.temperature}` 占位值，模型不得编造路径。",
@@ -656,8 +675,7 @@ def _business_component_line(
     if component.name == "WorkoutOverview":
         if "WorkoutOverview@1" in templates:
             return (
-                common
-                + '; syntax=Template("WorkoutOverview@1","latest",params); '
+                common + '; syntax=Template("WorkoutOverview@1","latest",params); '
                 "params 只传 Variant 签名允许且语义匹配的 sourceIcon/caloriesIcon，缺失时使用 {}。"
                 "动作只由布局末尾持有；不得输出旧 WorkoutOverview(...) 构造器。"
             )

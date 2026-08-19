@@ -273,20 +273,14 @@ class AdvancedScopeBrief(StrictModel):
         return values
 
 
-class TemplateRouteDecision(StrictModel):
-    """第四接口 create 路由的首层模板完整覆盖判断。"""
+class TemplateRetrievalQuery(StrictModel):
+    """第四接口 create 路由的首层用户强诉求提取结果。"""
 
-    route_version: Literal["template-route-decision/2"] = Field(
-        default="template-route-decision/2",
+    route_version: Literal["template-retrieval-query/1"] = Field(
+        default="template-retrieval-query/1",
         alias="routeVersion",
     )
-    template_usable: bool = Field(alias="templateUsable")
-    theme_id: str | None = Field(default=None, alias="themeId")
-    advanced_component_ids: tuple[str, ...] = Field(
-        default=(),
-        alias="advancedComponentIds",
-        max_length=4,
-    )
+    theme_id: str = Field(alias="themeId", min_length=1)
     required_output_fields_by_capability: dict[str, tuple[str, ...]] = Field(
         default_factory=dict,
         alias="requiredOutputFieldsByCapability",
@@ -308,22 +302,13 @@ class TemplateRouteDecision(StrictModel):
                 raise ValueError("required output fields must be JSON Pointers")
         return values
 
-    @model_validator(mode="after")
-    def route_fields_match_decision(self) -> TemplateRouteDecision:
-        if len(self.advanced_component_ids) != len(set(self.advanced_component_ids)):
-            raise ValueError("advancedComponentIds must be unique")
-        has_template_scope = bool(self.theme_id and self.advanced_component_ids)
-        has_required_fields = bool(self.required_output_fields_by_capability)
-        if self.template_usable and not (has_template_scope and has_required_fields):
-            raise ValueError("usable Template route requires scope and query-required fields")
-        rejected_has_route_data = bool(
-            self.theme_id
-            or self.advanced_component_ids
-            or self.required_output_fields_by_capability
-        )
-        if not self.template_usable and rejected_has_route_data:
-            raise ValueError("rejected Template route must not include route data")
-        return self
+    @field_validator("theme_id")
+    @classmethod
+    def non_empty_retrieval_theme(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("themeId must not be empty")
+        return value
 
 
 class AdaptiveTemplateSlot(StrictModel):
