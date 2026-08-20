@@ -18,7 +18,7 @@ generateWidgetCardCompactDsl
             ├─ 第一层 LLM：只从候选字段中提取 query 必显字段并选择 Theme
             ├─ CardTpl Variant 字段 Token 集合检索
             │    ├─ 必显字段不属于候选或模板未消费任一必显字段 → 原始 Compact 流程
-            │    └─ Theme、字段、类型、尺寸和准入全部匹配 → 锁定一个模板 Variant
+            │    └─ 字段、类型、尺寸、角色和准入全部匹配 → 锁定一个模板 Variant
             ├─ 检索外适配层：由模板映射内部业务组件范围
             ├─ 第二层 LLM：只生成受限布局和模板调用
             ├─ 服务端解析、参数校验、模板展开
@@ -76,10 +76,11 @@ generateWidgetCardTerseDslNested2
 
 检索索引随 Registry 加载到内存。每个 CardTpl Variant 的 required binding 和 required 非素材参数来源被
 规范化为 `(capabilityId, JSON Pointer, type)` 字段 Token。匹配要求“用户强诉求字段集合 ⊆ Variant required
-字段集合 ⊆ TaskSpec 实际可用字段集合”，并独立校验 Theme、尺寸、hero role 与 Provider admission。optional
-字段不进入 required 集合，因此不枚举 `2^n` 组合；集合使用 `frozenset` 直接判断，不计算整 Schema Hash。
-多个结果按额外 required 字段最少、模板 ID、Variant 名稳定排序后只返回第一个。检索结果只包含 Theme、模板
-和 Variant，高级组件由检索外适配层映射。
+字段集合 ⊆ TaskSpec 实际可用字段集合”，并独立校验尺寸、hero role 与 Provider admission。Theme 仍由第一层
+选择并传给后续生成，但不作为检索硬门禁，从而保留跨主题检索。optional 字段不进入 required 集合，因此不枚举
+`2^n` 组合；集合使用 `frozenset` 直接判断，不计算整 Schema Hash。多个结果按额外 required 字段最少、必填参数
+最少、模板 ID、Variant 名稳定排序后只返回第一个。检索结果只包含 Theme、模板和 Variant，高级组件由检索外
+适配层映射。
 
 `before_model_call` 由门面包装为单次通知。第一层已经触发通知时，即使回退原始模型，也不会重复下发开始事件。
 

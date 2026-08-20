@@ -5,17 +5,16 @@
   compatibleThemeProfileIds: ["sleep-night-violet", "race-sunrise-action", "race-night-violet"],
   allowedParentComponents: ["Column", "Row", "List", "Stack"],
   bindings: {
-    durationText: { path: "/nightSleepDurationText", type: "string" },
     status: { path: "/sleepStatus", type: "string" },
     asleep: { path: "/fallAsleepTimeText", type: "string" },
     wakeup: { path: "/wakeupTimeText", type: "string" }
   },
   params: {
     sleepDurationPrimaryValueText: {
-      type: "string", sourcePaths: ["/nightSleepDurationText"]
+      type: "string", required: true, sourcePaths: ["/nightSleepDurationText"]
     },
     sleepDurationPrimaryUnitText: {
-      type: "string", sourcePaths: ["/nightSleepDurationText"]
+      type: "string", required: true, sourcePaths: ["/nightSleepDurationText"]
     },
     sleepDurationSecondaryValueText: { type: "string", sourcePaths: ["/nightSleepDurationText"] },
     sleepDurationSecondaryUnitText: { type: "string", sourcePaths: ["/nightSleepDurationText"] },
@@ -24,7 +23,7 @@
   limits: { maxNodes: 28, maxDepth: 7 }
 })
 
-#Variant("duration", { sizes: ["2x2", "2x4"], roles: ["hero"], requires: ["durationText"] })
+#Variant("duration", { sizes: ["2x2", "2x4"], roles: ["hero"], requires: [], requiresParams: ["sleepDurationPrimaryValueText", "sleepDurationPrimaryUnitText"] })
 Column("compact", {
   _advancedComponent: "SleepOverview", width: "matchParent", height: "matchParent",
   itemMargin: 4, justifyContent: "spaceBetween", alignItems: "start", clip: true,
@@ -48,7 +47,8 @@ Column("compact", {
     clip: true, constraintSize: { minWidth: 0, minHeight: 0 }
   },
     Row("between", { itemMargin: 0, justifyContent: "start", alignItems: "bottom", constraintSize: { minWidth: 0, minHeight: 0 } },
-      Text(Bind("durationText"), "title", { fontSize: 30, minFontSize: 30, fontWeight: 700, fontColor: "#FFFFFFFF", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } })
+      Text(Param("sleepDurationPrimaryValueText"), "title", { fontSize: 30, minFontSize: 30, fontWeight: 700, fontColor: "#FFFFFFFF", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } }),
+      Text(Param("sleepDurationPrimaryUnitText"), "subtitle", { fontSize: 12, minFontSize: 12, fontWeight: 400, fontColor: "#99FFFFFF", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } })
     )
   )
 )
@@ -79,7 +79,7 @@ Column("compact", {
 )
 #EndVariant
 
-#Variant("insufficient", { sizes: ["2x2", "2x4"], roles: ["hero"], requires: ["status", "durationText"] })
+#Variant("insufficient", { sizes: ["2x2", "2x4"], roles: ["hero"], requires: ["status"], requiresParams: ["sleepDurationPrimaryValueText", "sleepDurationPrimaryUnitText"] })
 Column("compact", {
   _advancedComponent: "SleepOverview", width: "matchParent", height: "matchParent",
   itemMargin: 4, justifyContent: "spaceBetween", alignItems: "start", clip: true,
@@ -94,7 +94,8 @@ Column("compact", {
   Column("compact", { width: "matchParent", itemMargin: 4, justifyContent: "end", alignItems: "start", clip: true, constraintSize: { minWidth: 0, minHeight: 0 } },
     Row("between", { width: "matchParent", itemMargin: 2, justifyContent: "start", alignItems: "bottom", clip: true, constraintSize: { minWidth: 0, minHeight: 0 } },
       Row("between", { itemMargin: 0, justifyContent: "start", alignItems: "bottom", constraintSize: { minWidth: 0, minHeight: 0 } },
-        Text(Bind("durationText"), "title", { fontSize: 30, minFontSize: 30, fontWeight: 700, fontColor: "#FFFFFFFF", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } })
+        Text(Param("sleepDurationPrimaryValueText"), "title", { fontSize: 30, minFontSize: 30, fontWeight: 700, fontColor: "#FFFFFFFF", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } }),
+        Text(Param("sleepDurationPrimaryUnitText"), "subtitle", { fontSize: 12, minFontSize: 12, fontWeight: 400, fontColor: "#99FFFFFF", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } })
       )
     ),
     Text(Bind("status"), "subtitle", { fontSize: 10, minFontSize: 10, fontWeight: 400, fontColor: "#99FFFFFF", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } })
@@ -130,7 +131,7 @@ Column("compact", {
 )
 #EndVariant
 
-#Variant("schedule", { sizes: ["2x4"], roles: ["hero"], requires: ["asleep", "wakeup", "durationText"] })
+#Variant("schedule", { sizes: ["2x4"], roles: ["hero"], requires: ["asleep", "wakeup"], requiresParams: ["sleepDurationPrimaryValueText", "sleepDurationPrimaryUnitText"] })
 Row("between", {
   _advancedComponent: "SleepOverview", width: "100%", height: "100%", itemMargin: 8,
   alignItems: "center"
@@ -145,7 +146,8 @@ Row("between", {
       ),
       Row("between", { width: "matchParent", itemMargin: 2, justifyContent: "start", alignItems: "bottom", clip: true, constraintSize: { minWidth: 0, minHeight: 0 } },
         Row("between", { itemMargin: 0, justifyContent: "start", alignItems: "bottom", constraintSize: { minWidth: 0, minHeight: 0 } },
-          Text(Bind("durationText"), "title", { fontSize: 30, minFontSize: 30, fontWeight: 700, fontColor: "#FFFFFFFF", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } })
+          Text(Param("sleepDurationPrimaryValueText"), "title", { fontSize: 30, minFontSize: 30, fontWeight: 700, fontColor: "#FFFFFFFF", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } }),
+          Text(Param("sleepDurationPrimaryUnitText"), "subtitle", { fontSize: 12, minFontSize: 12, fontWeight: 400, fontColor: "#99FFFFFF", maxLines: 1, textOverflow: "ellipsis", constraintSize: { minWidth: 0, minHeight: 0 } })
         )
       )
     )

@@ -65,6 +65,7 @@ def retrieve_template_variant(
         matches,
         key=lambda record: (
             len(record.required_field_tokens - query_tokens),
+            record.required_parameter_count,
             record.template_id,
             record.variant_name,
         ),
@@ -151,7 +152,25 @@ def _record_matches(
         return False
     if not query_tokens.issubset(record.required_field_tokens):
         return False
+    if not _template_required_fields_are_available(record, task_spec, card_spec):
+        return False
     definition = registry.require_template(record.template_id)
     variant = registry.require_variant(record.template_id, record.variant_name)
     admission = provider_template_variant_admission(definition, variant, task_spec, card_spec)
     return admission.admitted
+
+
+def _template_required_fields_are_available(
+    record: TemplateVariantSearchRecord,
+    task_spec: TaskSpec,
+    card_spec: dict[str, Any],
+) -> bool:
+    """Require every Variant field, including its type, to exist in TaskSpec."""
+
+    data_root = _capability_data_root(card_spec, record.capability_id)
+    for token in record.required_field_tokens:
+        pointer = f"{data_root.rstrip('/')}{token.path}"
+        leaf = _task_spec_schema_leaf(task_spec.dataModelSchema, pointer)
+        if leaf is None or leaf.get("type") != token.data_type:
+            return False
+    return True

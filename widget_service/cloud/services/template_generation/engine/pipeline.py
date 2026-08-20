@@ -298,7 +298,12 @@ def _with_provider_template_binding_projection(
                 projection_path = f"{root.rstrip('/')}/_templateProjection/{component_id}"
                 _set_pointer_value(schema, projection_path, component_projection)
                 changed = True
-            for binding in definition.bindings.values():
+            required_fields = {
+                (field.path, field.data_type): field
+                for variant in definition.variants
+                for field in variant.required_data_fields
+            }
+            for binding in required_fields.values():
                 path = f"{root.rstrip('/')}{binding.path}"
                 value = _pointer_value(source.dataModelSchema, path)
                 if value is None:

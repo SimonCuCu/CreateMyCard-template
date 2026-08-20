@@ -141,6 +141,66 @@ def test_optional_fields_are_not_expanded_into_variant_combinations() -> None:
     assert all(token.path != "/updatedAt" for token in record.required_field_tokens)
 
 
+def test_required_parameter_source_paths_are_required_task_spec_fields() -> None:
+    registry = get_cardplan_registry()
+    record = next(
+        item
+        for item in registry.template_variant_search_records
+        if item.template_id == "ScheduleOverview@1" and item.variant_name == "nextEvent"
+    )
+    assert FieldToken("GetCalendarEvents", "/events/0/dtStart", "string") in (
+        record.required_field_tokens
+    )
+    assert FieldToken("GetCalendarEvents", "/events/0/dtEnd", "string") in (
+        record.required_field_tokens
+    )
+
+    task_spec = TaskSpec(
+        userQuery="显示下一场日程",
+        size="2x2",
+        dataModelSchema={
+            "data": {
+                "calendar": {
+                    "events": [
+                        {
+                            "title": _field("产品评审"),
+                            "dtStart": _field("09:30"),
+                        }
+                    ]
+                }
+            }
+        },
+    )
+    binding = CandidateDataBinding(
+        capabilityId="GetCalendarEvents",
+        writeResultTo="/data/calendar",
+        candidateOutputFields=["/events/0/title", "/events/0/dtStart", "/events/0/dtEnd"],
+    )
+    card_spec = {
+        "suggestSize": "2x2",
+        "dataBindings": [
+            {
+                "capabilityId": "GetCalendarEvents",
+                "writeResultTo": "/data/calendar",
+            }
+        ],
+    }
+    query = TemplateRetrievalQuery(
+        themeId="meeting-paper-neutral",
+        requiredOutputFieldsByCapability={"GetCalendarEvents": ["/events/0/title"]},
+    )
+
+    with pytest.raises(TemplateRetrievalMiss, match="no CardTpl Variant"):
+        retrieve_template_variant(query, task_spec, registry, (binding,), card_spec)
+
+    task_spec.dataModelSchema["data"]["calendar"]["events"][0]["dtEnd"] = _field(
+        10,
+        "integer",
+    )
+    with pytest.raises(TemplateRetrievalMiss, match="no CardTpl Variant"):
+        retrieve_template_variant(query, task_spec, registry, (binding,), card_spec)
+
+
 def test_theme_mismatch_does_not_block_field_match() -> None:
     match = retrieve_template_variant(
         _query("/current/temperatureText", theme_id="meeting-paper-neutral"),
@@ -162,6 +222,37 @@ def test_task_spec_type_mismatch_is_a_retrieval_miss() -> None:
     with pytest.raises(TemplateRetrievalMiss, match="no CardTpl Variant"):
         retrieve_template_variant(
             _query("/current/condition"),
+            task_spec,
+            get_cardplan_registry(),
+            (_weather_binding(),),
+            _weather_card_spec(),
+        )
+
+
+def test_missing_template_required_field_is_a_retrieval_miss() -> None:
+    task_spec = _weather_task()
+    del task_spec.dataModelSchema["data"]["weather"]["location"]["districtName"]
+
+    with pytest.raises(TemplateRetrievalMiss, match="no CardTpl Variant"):
+        retrieve_template_variant(
+            _query("/current/temperatureText", "/current/condition"),
+            task_spec,
+            get_cardplan_registry(),
+            (_weather_binding(),),
+            _weather_card_spec(),
+        )
+
+
+def test_template_required_field_type_mismatch_is_a_retrieval_miss() -> None:
+    task_spec = _weather_task()
+    task_spec.dataModelSchema["data"]["weather"]["location"]["districtName"] = _field(
+        1,
+        "number",
+    )
+
+    with pytest.raises(TemplateRetrievalMiss, match="no CardTpl Variant"):
+        retrieve_template_variant(
+            _query("/current/temperatureText", "/current/condition"),
             task_spec,
             get_cardplan_registry(),
             (_weather_binding(),),

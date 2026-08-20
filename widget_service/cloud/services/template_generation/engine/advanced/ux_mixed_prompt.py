@@ -316,6 +316,14 @@ def build_ux_mixed_prompt(
         )
         for component in components
     ]
+    selected_variant_override = ""
+    if selected_template_id is not None and selected_variant_name is not None:
+        selected_variant_override = (
+            "检索结果已锁定唯一 Template Variant："
+            f'Template("{selected_template_id}","{selected_variant_name}",params)。'
+            "必须使用该 Template ID 和 Variant；此规则覆盖前文对该 Template 的其它 Variant 建议，"
+            "禁止改选或升级 Variant。params 仍须符合该 Variant 的参数签名与可信值约束。"
+        )
     ux_override = "\n".join(
         (
             "",
@@ -324,6 +332,7 @@ def build_ux_mixed_prompt(
             *layout_lines,
             "已批准的业务高级组件范围：",
             *business_lines,
+            selected_variant_override,
             "template 实现的业务高级组件必须逐组使用 requiredLocalTemplateGroups；"
             "terse-dsl 实现必须使用对应的 directBusinessComponents 调用，不能改用 JSON Template。",
             "最终输出必须直接以唯一批准的布局高级组件为根并以分号结束；禁止 card@1。",

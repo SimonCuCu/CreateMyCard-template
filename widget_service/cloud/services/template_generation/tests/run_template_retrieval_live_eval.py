@@ -21,8 +21,8 @@ from typing import Any
 
 import certifi
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT / "cloud"))
+WIDGET_SERVICE_ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(WIDGET_SERVICE_ROOT / "cloud"))
 
 _MAX_JSON_RETRIES = 2
 _JSON_RETRY_MESSAGE = {
@@ -273,7 +273,7 @@ async def main() -> None:
     parser.add_argument(
         "--fixture",
         type=Path,
-        default=PROJECT_ROOT / "tests/fixtures/template_retrieval_eval_cases.jsonl",
+        default=Path(__file__).parent / "fixtures/template_retrieval_eval_cases.jsonl",
     )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--concurrency", type=int, default=4)

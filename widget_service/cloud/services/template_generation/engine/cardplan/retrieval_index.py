@@ -23,6 +23,7 @@ class TemplateVariantSearchRecord:
     supported_card_sizes: frozenset[str]
     supported_roles: frozenset[str]
     required_field_tokens: frozenset[FieldToken]
+    required_parameter_count: int
 
 
 def build_template_variant_search_records(
@@ -45,6 +46,9 @@ def build_template_variant_search_records(
                     required_field_tokens=frozenset(
                         FieldToken(capability_id, field.path, field.data_type)
                         for field in variant.required_data_fields
+                    ),
+                    required_parameter_count=len(
+                        variant.parameters_schema.get("required", ()),
                     ),
                 )
             )

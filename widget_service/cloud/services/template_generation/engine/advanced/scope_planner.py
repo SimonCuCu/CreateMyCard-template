@@ -552,6 +552,7 @@ def adapt_template_match_to_scope(
             data_shape,
             registry,
             available_capability_ids,
+            enforce_theme=False,
         )
     except ValueError as exc:
         raise TemplateRouteNotApplicable(str(exc)) from exc
@@ -619,6 +620,8 @@ def validate_advanced_scope(
     data_shape: DataShape,
     registry: CardPlanRegistry,
     available_capability_ids: tuple[str, ...] | None = None,
+    *,
+    enforce_theme: bool = True,
 ) -> None:
     del data_shape
     effective_ids = resolve_available_capability_ids(
@@ -659,7 +662,7 @@ def validate_advanced_scope(
     if any(task_spec.size not in item.supported_card_sizes for item in components):
         raise ValueError("AdvancedScopeBrief selected a component unsupported by card size")
     allowed_themes = set(_theme_ids_for_components(components, registry))
-    if scope.theme_id not in allowed_themes:
+    if enforce_theme and scope.theme_id not in allowed_themes:
         raise ValueError("AdvancedScopeBrief selected a Theme outside component palettes")
     if not resolve_scope_layout_ids(scope, task_spec, registry):
         raise ValueError("AdvancedScopeBrief has no compatible UX layout")

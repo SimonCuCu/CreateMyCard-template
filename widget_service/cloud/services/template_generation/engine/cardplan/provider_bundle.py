@@ -1323,15 +1323,18 @@ def _provider_variant_binding_admission(
     task_spec: TaskSpec,
     root: str,
 ) -> ProviderTemplateAdmission:
-    for name in variant.required_bindings:
-        binding = definition.bindings[name]
+    binding_names_by_field = {
+        (binding.path, binding.data_type): name for name, binding in definition.bindings.items()
+    }
+    for binding in variant.required_data_fields:
         path = f"{root.rstrip('/')}{binding.path}"
+        binding_name = binding_names_by_field.get((binding.path, binding.data_type))
         leaf = _task_spec_schema_leaf(task_spec.dataModelSchema, path)
         if leaf is None:
             return ProviderTemplateAdmission(
                 False,
                 "binding-path-unavailable",
-                binding_name=name,
+                binding_name=binding_name,
                 path=path,
                 expected_type=binding.data_type,
             )
@@ -1340,65 +1343,12 @@ def _provider_variant_binding_admission(
             return ProviderTemplateAdmission(
                 False,
                 "binding-type-mismatch",
-                binding_name=name,
+                binding_name=binding_name,
                 path=path,
                 expected_type=binding.data_type,
                 actual_type=str(actual_type),
             )
-    values_by_field = _provider_sample_values_by_field(task_spec.dataModelSchema)
-    properties = variant.parameters_schema.get("properties", {})
-    for name in variant.parameters_schema.get("required", ()):
-        if name in definition.asset_parameter_semantic_tags:
-            continue
-        candidates = list(dict.fromkeys(values_by_field.get(name, ())))
-        if len(candidates) != 1:
-            return ProviderTemplateAdmission(
-                False,
-                "parameter-value-unavailable",
-                binding_name=name,
-            )
-        expected_type = properties.get(name, {}).get("type")
-        if not _parameter_value_matches_type(candidates[0], expected_type):
-            return ProviderTemplateAdmission(
-                False,
-                "parameter-type-mismatch",
-                binding_name=name,
-                expected_type=str(expected_type),
-                actual_type=type(candidates[0]).__name__,
-            )
     return ProviderTemplateAdmission(True)
-
-
-def _provider_sample_values_by_field(value: object) -> dict[str, tuple[object, ...]]:
-    collected: dict[str, list[object]] = {}
-
-    def visit(current: object, field_name: str | None = None) -> None:
-        if isinstance(current, dict) and "sampleValue" in current and field_name:
-            sample = current["sampleValue"]
-            if sample is None or isinstance(sample, (str, int, float, bool)):
-                collected.setdefault(field_name, []).append(sample)
-            return
-        if isinstance(current, dict):
-            for key, child in current.items():
-                visit(child, key)
-        elif isinstance(current, list):
-            for child in current[:1]:
-                visit(child, field_name)
-
-    visit(value)
-    return {key: tuple(values) for key, values in collected.items()}
-
-
-def _parameter_value_matches_type(value: object, expected: object) -> bool:
-    if expected == "string":
-        return isinstance(value, str)
-    if expected == "boolean":
-        return isinstance(value, bool)
-    if expected == "integer":
-        return isinstance(value, int) and not isinstance(value, bool)
-    if expected == "number":
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
-    return False
 
 
 def _provider_data_root(
