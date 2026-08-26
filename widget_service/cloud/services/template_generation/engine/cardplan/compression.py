@@ -7,6 +7,7 @@ import json
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Any, Literal
 
 from .models import TemplateDefinition, TemplateNode, TemplateValue, TemplateVariant
@@ -241,6 +242,9 @@ class InterningMetrics:
     node_reduction_ratio: float
 
 
+_DAG_ARTIFACT_VERSION = "compressed-provider-component-dag/1"
+
+
 class TemplateCompressionAnalyzer:
     """Analyze trusted Template IR without editing source assets."""
 
@@ -440,6 +444,58 @@ def template_interning_metrics(
     """Measure the value-preserving DAG reduction without retaining the result."""
     _interned, metrics = intern_template_definitions(definitions)
     return metrics
+
+
+def serialize_compressed_component_dag(
+    definitions: tuple[TemplateDefinition, ...],
+) -> dict[str, Any]:
+    """Serialize the lossless shared Provider DAG for inspection or offline loading."""
+    interned_definitions, metrics = intern_template_definitions(definitions)
+    nodes: dict[str, dict[str, Any]] = {}
+
+    def serialize_node(node: TemplateNode) -> str:
+        child_node_ids = tuple(serialize_node(child) for child in node.children)
+        node_id = _template_node_digest(node, child_node_ids)
+        payload = {
+            "component": node.component,
+            "values": [value.model_dump(by_alias=True) for value in node.values],
+            "childNodeIds": list(child_node_ids),
+            "spreadChildren": node.spread_children,
+        }
+        existing = nodes.get(node_id)
+        if existing is not None and existing != payload:
+            raise ValueError("Compressed DAG node ID collision")
+        nodes[node_id] = payload
+        return node_id
+
+    templates: list[dict[str, Any]] = []
+    for definition in interned_definitions:
+        payload = definition.model_dump(by_alias=True)
+        variants = payload.get("variants")
+        if not isinstance(variants, (list, tuple)):
+            raise ValueError(f"Template has no serializable variants: {definition.wire_id}")
+        for variant, source_variant in zip(variants, definition.variants, strict=True):
+            variant.pop("root", None)
+            variant["rootNodeId"] = serialize_node(source_variant.root)
+        templates.append(payload)
+    return {
+        "artifactVersion": _DAG_ARTIFACT_VERSION,
+        "sourceFormat": "cardtpl/1",
+        "metrics": asdict(metrics),
+        "nodes": nodes,
+        "templates": templates,
+    }
+
+
+def write_compressed_component_dag(
+    definitions: tuple[TemplateDefinition, ...],
+    output_path: Path,
+) -> None:
+    """Write a deterministic, human-inspectable compressed Provider DAG."""
+    payload = serialize_compressed_component_dag(definitions)
+    content = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(content, encoding="utf-8")
 
 
 def canonicalize_definition(definition: TemplateDefinition) -> tuple[CanonicalTemplate, ...]:

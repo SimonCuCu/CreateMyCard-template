@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from services.template_generation.engine.cardplan.compression import (
     CompressionConfig,
     TemplateCompressionAnalyzer,
@@ -9,7 +11,9 @@ from services.template_generation.engine.cardplan.compression import (
     compare_trees,
     expand_pattern,
     intern_template_definitions,
+    serialize_compressed_component_dag,
     validate_component_dag,
+    write_compressed_component_dag,
 )
 from services.template_generation.engine.cardplan.models import (
     TemplateBinding,
@@ -152,3 +156,28 @@ def test_interning_shares_equal_nodes_without_changing_definitions() -> None:
     assert definitions[0].variants[0].root is definitions[1].variants[0].root
     assert metrics.template_count == 2
     assert metrics.shared_node_references > 0
+
+
+def test_serialized_dag_uses_one_node_entry_for_equal_roots() -> None:
+    first = _definition("BatteryNormalFull", _node("Column", _ring(52), width=160))
+    second = _definition("BatteryChargingFull", _node("Column", _ring(52), width=160))
+
+    artifact = serialize_compressed_component_dag((first, second))
+
+    templates = artifact["templates"]
+    first_root_id = templates[0]["variants"][0]["rootNodeId"]
+    second_root_id = templates[1]["variants"][0]["rootNodeId"]
+    assert artifact["artifactVersion"] == "compressed-provider-component-dag/1"
+    assert first_root_id == second_root_id
+    assert first_root_id in artifact["nodes"]
+
+
+def test_compressed_dag_writer_emits_readable_json(tmp_path) -> None:
+    definition = _definition("BatteryNormalFull", _ring(52))
+    output_path = tmp_path / "compressed-dag.json"
+
+    write_compressed_component_dag((definition,), output_path)
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["templates"][0]["templateId"] == "BatteryNormalFull"
+    assert payload["nodes"]
