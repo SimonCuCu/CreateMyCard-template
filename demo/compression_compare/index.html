@@ -47,6 +47,10 @@
         <button id="generate">生成并对比</button>
       </form>
       <p id="status">等待生成。</p>
+      <details id="planner-result" hidden>
+        <summary>查看本轮共享宿主规划</summary>
+        <pre></pre>
+      </details>
       <section class="cards">
         <article class="panel"><h2>原组件库（未压缩）</h2><div id="original"></div></article>
         <article class="panel"><h2>压缩组件库</h2><div id="compressed"></div></article>
@@ -85,6 +89,11 @@
         details.append(summary, code);
         target.append(meta, shell, details);
       };
+      const renderPlanner = (planner) => {
+        const details = document.getElementById("planner-result");
+        details.querySelector("pre").textContent = JSON.stringify(planner, null, 2);
+        details.hidden = false;
+      };
       document.getElementById("form").addEventListener("submit", async (event) => {
         event.preventDefault();
         const query = document.getElementById("query").value.trim();
@@ -103,6 +112,7 @@
           if (!response.ok) throw new Error(result.error || "生成失败");
           renderResult("original", result.original);
           renderResult("compressed", result.compressed);
+          renderPlanner(result.planner);
           status.textContent = `已完成：${result.query}`;
         } catch (error) {
           status.textContent = `生成失败：${error.message}`;

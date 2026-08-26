@@ -5,8 +5,9 @@
 - 原组件库：`/Users/simonhcb/Desktop/huawei/CreateMyCard 9.34.06 AM`
 - 压缩组件库：当前仓库（`compress` 分支）
 
-每侧都走云侧已有的 WebSocket 链路：能力概述、数据 Schema、`generateWidgetCardCompactDsl`、artifact 下载。
-Demo 只补齐仓库外的宿主 Agent 候选规划；目前明确覆盖电量 query 和天气 query。云侧服务仍负责模板检索、组件选择、Compact DSL 转换、校验与 artifact 持久化。
+两侧都先各自读取能力概述与数据 Schema。Demo 随后只运行一次共享的宿主 Main Agent：第一轮从能力概述提取语义候选，第二轮依据已选 Schema 生成数据绑定；两侧目录、字段和素材不一致时立即停止比较。完全相同的候选计划才会分别发送给两套服务的 `generateWidgetCardCompactDsl`，并读取 artifact。
+
+当前本地环境没有端侧 `RequestDataPermission` 工具，因此页面会明确记录“工具不可用，按正式编排规则默认放行”。这不是伪造授权；接入真实端工具后，应由该工具结果替换这个节点。云侧服务仍负责模板检索、组件选择、Compact DSL 转换、校验与 artifact 持久化。
 
 ## 启动
 
