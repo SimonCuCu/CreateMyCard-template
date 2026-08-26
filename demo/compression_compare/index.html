@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CreateMyCard 压缩组件库对比</title>
+    <style>
+      :root { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; color: #182333; background: #eef2f6; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      main { max-width: 1050px; margin: 0 auto; padding: 32px 20px 56px; }
+      h1, h2, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; }
+      p { color: #607184; line-height: 1.55; }
+      form { display: flex; gap: 10px; margin: 22px 0 10px; }
+      input, button { padding: 12px; border: 1px solid #bdc9d5; border-radius: 10px; font: inherit; }
+      input { flex: 1; min-width: 0; background: white; }
+      button { border: 0; color: white; background: #087fff; cursor: pointer; }
+      button:disabled { opacity: .55; cursor: wait; }
+      #status { min-height: 24px; font-size: 13px; }
+      .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 18px; }
+      .panel { min-width: 0; padding: 20px; border: 1px solid #dce3ea; border-radius: 18px; background: white; }
+      .panel h2 { margin-bottom: 6px; font-size: 17px; }
+      .meta { min-height: 42px; font-size: 12px; overflow-wrap: anywhere; }
+      .preview-shell { display: grid; place-items: center; min-height: 240px; border-radius: 16px; background: #dce3ea; }
+      .widget-canvas { width: 160px; height: 160px; }
+      .a2ui-column, .a2ui-row { display: flex; min-width: 0; min-height: 0; }
+      .a2ui-column { flex-direction: column; }
+      .a2ui-row { flex-direction: row; }
+      .a2ui-text { flex-shrink: 0; min-width: 0; line-height: 1.15; white-space: normal; }
+      .render-error { padding: 12px; color: #a83838; background: #fff4f4; border: 1px solid #efc6c6; border-radius: 10px; font-size: 12px; }
+      details { margin-top: 14px; }
+      pre { max-height: 250px; overflow: auto; padding: 12px; border-radius: 10px; color: #dce8f6; background: #132032; font-size: 11px; white-space: pre-wrap; }
+      @media (max-width: 720px) { .cards { grid-template-columns: 1fr; } form { flex-direction: column; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>同一 query 的原库 / 压缩库完整出卡对比</h1>
+      <p>
+        每一栏都执行：能力概述 → Schema → Compact 出卡 → artifact 读取。两栏随后使用同一份从 miniWidget
+        直接复制的 <code>renderer.js</code> 模拟 A2UI；为适配它仅支持 Text、Row、Column 的边界，Stack、
+        Progress、Image 会被明确映射为这三类元素。浏览器模拟不代表鸿蒙原生像素效果。
+      </p>
+      <form id="form">
+        <input id="query" value="帮我生成一个手机电量卡片" aria-label="卡片需求">
+        <button id="generate">生成并对比</button>
+      </form>
+      <p id="status">等待生成。</p>
+      <section class="cards">
+        <article class="panel"><h2>原组件库（未压缩）</h2><div id="original"></div></article>
+        <article class="panel"><h2>压缩组件库</h2><div id="compressed"></div></article>
+      </section>
+    </main>
+    <script type="module">
+      import { renderA2UI } from "./renderer.js";
+      import { adaptCreateMyCardA2UI } from "./a2ui_adapter.js";
+
+      const parseGenui = (text) => text.split("\n").filter(Boolean).map((line) => JSON.parse(line));
+      const make = (tag, className = "") => {
+        const node = document.createElement(tag);
+        node.className = className;
+        return node;
+      };
+      const renderResult = (targetId, result) => {
+        const target = document.getElementById(targetId);
+        target.replaceChildren();
+        const meta = make("p", "meta");
+        meta.textContent = `尺寸：${result.suggestSize || "—"}；artifact：${result.artifactUrl}`;
+        const shell = make("div", "preview-shell");
+        const canvas = make("div", "widget-canvas");
+        shell.append(canvas);
+        try {
+          renderA2UI(adaptCreateMyCardA2UI(parseGenui(result.genui)), canvas);
+        } catch (error) {
+          const failure = make("div", "render-error");
+          failure.textContent = `miniWidget renderer 未支持该 artifact：${error.message}`;
+          shell.replaceChildren(failure);
+        }
+        const details = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = "查看真实 genui";
+        const code = make("pre");
+        code.textContent = result.genui;
+        details.append(summary, code);
+        target.append(meta, shell, details);
+      };
+      document.getElementById("form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const query = document.getElementById("query").value.trim();
+        if (!query) return;
+        const button = document.getElementById("generate");
+        const status = document.getElementById("status");
+        button.disabled = true;
+        status.textContent = "正在分别执行完整出卡流程…";
+        try {
+          const response = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "生成失败");
+          renderResult("original", result.original);
+          renderResult("compressed", result.compressed);
+          status.textContent = `已完成：${result.query}`;
+        } catch (error) {
+          status.textContent = `生成失败：${error.message}`;
+        } finally {
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
