@@ -109,6 +109,46 @@ Column({
         _instantiate_blueprint(root, {}, spread_children=(hero,))
 
 
+def test_provider_compiler_expands_a_component_file_reference() -> None:
+    source = """#Template BatteryOverviewNormalFull@1(props: { batteryIcon?: asset })
+data = {
+    percent: $path("/batterySOC")
+}
+
+UseComponent("BatteryOverview.FullStatusSummary@1")
+#End
+"""
+    component_bodies = {
+        "BatteryOverview.FullStatusSummary@1": """Column(
+  Text(`电量 ${data.percent}`),
+  IfPresent(props.batteryIcon, Image(props.batteryIcon))
+)"""
+    }
+    definition = compile_card_template(
+        source,
+        provider_id="example.battery",
+        business_id="BatteryOverview",
+        expected_wire_id="BatteryOverviewNormalFull@1",
+        expected_capability_id="GetPhoneBatteryInfo",
+        data_domain="/data/phoneBattery",
+        description="expanded component",
+        supported_card_sizes=("2x2",),
+        primary_data=("/batterySOC",),
+        secondary_data=(),
+        optional_data=(),
+        output_schema={
+            "type": "object",
+            "properties": {"batterySOC": {"type": "string"}},
+        },
+        component_bodies=component_bodies,
+    )
+
+    root = definition.variants[0].root
+    assert root.component == "Column"
+    assert root.children[0].values[0].kind == "interpolation"
+    assert root.children[1].component == "IfParam"
+
+
 @pytest.mark.parametrize(
     ("body", "message"),
     (

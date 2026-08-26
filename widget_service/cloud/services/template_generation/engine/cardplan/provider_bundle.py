@@ -71,6 +71,7 @@ _REFERENCE_CALLS = frozenset({"Bind", "Param", "Asset", "Expr", "_CardTplInterpo
 _FORBIDDEN_KEYS = frozenset({"__proto__", "prototype", "constructor"})
 _TEMPLATE_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9-]{0,63}$")
 _REFERENCE_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
+_COMPONENT_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9.-]{0,127}@[1-9][0-9]*$")
 _PROVIDER_ID_RE = re.compile(r"^[a-z][a-z0-9]*(?:\.[a-z][a-z0-9-]*)+$")
 _PROVIDER_VERSION_RE = re.compile(r"^[1-9][0-9]*\.[0-9]+\.[0-9]+(?:-[a-z0-9.-]+)?$")
 _MAX_BUNDLE_FILE_BYTES = 1_048_576
@@ -308,6 +309,7 @@ def load_provider_bundle(bundle_root: Path) -> LoadedProviderBundle:
     _validate_compatibility(manifest.compatibility)
 
     template_entries = _unique_template_entries(manifest.templates)
+    component_bodies = _load_component_bodies(root)
     capabilities = _capabilities_by_id(manifest.capabilities)
     first_layer_rule = (
         _load_rule_document(root, manifest.first_layer_rule, "first-layer")
@@ -347,6 +349,7 @@ def load_provider_bundle(bundle_root: Path) -> LoadedProviderBundle:
             secondary_data=entry.secondary_data,
             optional_data=entry.optional_data,
             output_schema=output_schema,
+            component_bodies=component_bodies,
         )
         definition = definition.model_copy(
             update={"requires_layout_action": entry.requires_layout_action}
@@ -386,6 +389,7 @@ def compile_card_template(
     secondary_data: tuple[str, ...],
     optional_data: tuple[str, ...],
     output_schema: dict[str, Any],
+    component_bodies: dict[str, str] | None = None,
 ) -> TemplateDefinition:
     """Compile one non-executable ``cardtpl/1`` source into the trusted Template IR."""
     if len(source) > _MAX_TEMPLATE_SOURCE_CHARS:
@@ -405,6 +409,7 @@ def compile_card_template(
         secondary_data=secondary_data,
         optional_data=optional_data,
         output_schema=output_schema,
+        component_bodies=component_bodies or {},
     )
 
 
@@ -422,6 +427,7 @@ def _compile_ui_card_template(
     secondary_data: tuple[str, ...],
     optional_data: tuple[str, ...],
     output_schema: dict[str, Any],
+    component_bodies: dict[str, str],
 ) -> TemplateDefinition:
     """Compile the UI-oriented ``#Template Id(props, ...children)`` syntax."""
     signature, block = _ui_template_block(source, expected_wire_id)
@@ -448,7 +454,8 @@ def _compile_ui_card_template(
         )
     if bindings and (expected_capability_id is None or data_domain is None):
         raise ValueError("Provider data Template requires capabilityId and dataDomain")
-    transformed = _translate_ui_template_body(body)
+    expanded_body = _expand_component_references(body, component_bodies)
+    transformed = _translate_ui_template_body(expanded_body)
     root = _parse_component_body(transformed)
     if root.component in _CONDITIONAL_COMPONENTS:
         raise ValueError("Provider Template conditional cannot be the Template root")
@@ -589,6 +596,77 @@ def _ui_template_block(source: str, expected_wire_id: str) -> tuple[str, str]:
         return blocks[expected_wire_id]
     except KeyError as exc:
         raise ValueError(f"Provider Template ID mismatch: {expected_wire_id}") from exc
+
+
+def _load_component_bodies(bundle_root: Path) -> dict[str, str]:
+    """Load declarative component bodies available to every Template in one Provider."""
+    component_root = bundle_root / "components"
+    if not component_root.is_dir():
+        return {}
+    components: dict[str, str] = {}
+    for path in sorted(component_root.rglob("*.cardtpl")):
+        source = _bounded_file_bytes(path).decode("utf-8")
+        component_id, body = _component_block(source, path.relative_to(bundle_root))
+        if component_id in components:
+            raise ValueError(f"duplicate Provider Component: {component_id}")
+        components[component_id] = body
+    return components
+
+
+def _component_block(source: str, relative_path: Path) -> tuple[str, str]:
+    lines = source.splitlines()
+    non_empty = [index for index, line in enumerate(lines) if line.strip()]
+    if not non_empty:
+        raise ValueError(f"Provider Component is empty: {relative_path}")
+    header_index = non_empty[0]
+    header = re.fullmatch(r"\s*#Component\s+([^\s]+)\s*", lines[header_index])
+    if header is None:
+        raise ValueError(f"Provider Component must start with #Component: {relative_path}")
+    component_id = header.group(1)
+    if _COMPONENT_ID_RE.fullmatch(component_id) is None:
+        raise ValueError(f"invalid Provider Component ID: {component_id}")
+    end_indexes = [index for index, line in enumerate(lines) if line.strip() == "#End"]
+    if len(end_indexes) != 1 or end_indexes[0] <= header_index:
+        raise ValueError(f"Provider Component must have one closing #End: {relative_path}")
+    end_index = end_indexes[0]
+    if any(line.strip() for line in lines[end_index + 1 :]):
+        raise ValueError(f"Provider Component has content after #End: {relative_path}")
+    body = "\n".join(lines[header_index + 1 : end_index]).strip()
+    if not body:
+        raise ValueError(f"Provider Component body is empty: {relative_path}")
+    return component_id, body
+
+
+def _expand_component_references(
+    body: str,
+    component_bodies: dict[str, str],
+) -> str:
+    """Inline trusted component sources before normal cardtpl/1 contract validation."""
+    call_re = re.compile(r"\bUseComponent\(\s*(\"(?:\\.|[^\"])*\"|'(?:\\.|[^'])*')\s*\)")
+
+    def expand(value: str, ancestry: tuple[str, ...]) -> str:
+        def replace(match: re.Match[str]) -> str:
+            component_id = ast.literal_eval(match.group(1))
+            is_valid_component_id = isinstance(component_id, str) and (
+                _COMPONENT_ID_RE.fullmatch(component_id) is not None
+            )
+            if not is_valid_component_id:
+                raise ValueError("UseComponent requires one valid component ID")
+            if component_id in ancestry:
+                cycle = " -> ".join((*ancestry, component_id))
+                raise ValueError(f"Provider Component reference cycle: {cycle}")
+            try:
+                component_body = component_bodies[component_id]
+            except KeyError as exc:
+                raise ValueError(f"unknown Provider Component: {component_id}") from exc
+            return f"({expand(component_body, (*ancestry, component_id))})"
+
+        return call_re.sub(replace, value)
+
+    expanded = expand(body, ())
+    if "UseComponent" in expanded:
+        raise ValueError("invalid UseComponent syntax")
+    return expanded
 
 
 def _ui_template_signature(

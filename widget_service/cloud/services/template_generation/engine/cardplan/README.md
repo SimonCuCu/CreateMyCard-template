@@ -1,31 +1,36 @@
-# CardPlan 压缩代码索引
+# CardPlan 压缩组件库索引
 
-本目录的 Provider 模板压缩保持原 .cardtpl 为唯一作者源。运行时和落盘快照都只做无损的结构共享。
+`compress` 分支的正式作者源是 Provider 下的 `.cardtpl` 文件。模板仍按原模板 ID 检索；模板体可以用
+`UseComponent("组件语义名@版本")` 引用同一 Provider 的 `components/` 文件。编译器会在校验与渲染前展开
+组件，因此端侧拿到的 Form 原子组件树与压缩前一致。
 
 ## 从哪里开始看
 
-- compression.py：结构哈希、精确驻留、近似候选分析和 DAG 落盘序列化。
-- registry.py：加载 Provider 模板后调用 intern_template_definitions()；后续检索和编译拿到的是
-  压缩后的模板对象。
-- ../compression_cli.py：生成分析 JSON 和完整压缩 DAG 快照的命令行入口。
-- generated/compressed-provider-component-dag.json：已提交的、可直接查看的全量压缩产物。
-- ../../tests/test_template_compression.py：共享等价性和落盘 JSON 的测试。
+- `provider_bundle.py`：加载 `components/*.cardtpl`，展开 `UseComponent(...)`，再执行原有的绑定、参数和
+  节点校验。
+- `resources/source/providers/<provider>/components/`：压缩后真正落盘、可直接查看的组件源。
+- `resources/source/providers/<provider>/templates/`：保留原检索 ID、数据契约和薄入口。
+- `registry.py`：只加载并编译源文件；不再进行运行时结构驻留，也不读取 DAG JSON。
+- `compression.py` 与 `../compression_cli.py`：离线分析、等价性检查和可选 JSON 报告，不参与 query 运行时。
 
-## 最简命令
+## 如何查看 Battery
+
+先看 `resources/source/providers/battery/templates/battery-overview.cardtpl` 中的
+`BatteryOverviewNormalFull@1`、`BatteryOverviewChargingFull@1` 与 `BatteryOverviewLowFull@1`：三者都只有一行
+`UseComponent("BatteryOverview.FullStatusSummary@1")`。
+
+实际组件内容在
+`resources/source/providers/battery/components/battery-overview-full-status-summary.cardtpl`。这一个文件是三张
+卡共同使用的完整 TPL 组件体。
+
+## 可选检查报告
+
+如需重新生成整库的结构分析 JSON，可执行：
 
 ~~~bash
 PYTHONPATH=widget_service/cloud python3 \
   widget_service/cloud/services/template_generation/compression_cli.py \
-  --write-compressed-dag \
-  widget_service/cloud/services/template_generation/engine/cardplan/generated/\
-compressed-provider-component-dag.json
+  --write-compressed-dag /tmp/compressed-provider-component-dag.json
 ~~~
 
-## 如何查看 Battery
-
-在 generated/compressed-provider-component-dag.json 的 templates 中查找
-BatteryOverviewNormalFull。其 variants[].rootComponentId 是可读的压缩树名称；
-rootContentDigest 是机器校验的内容摘要。以摘要去掉 sha256: 前缀后到 nodes 中查找，递归读取
-childNodeIds 即可展开压缩后的组件树。多个模板有相同的名称和摘要，代表它们复用了同一组件子树。
-
-这个 JSON 是 compressed-provider-component-dag/1 的检查快照，不是 cardtpl/1 输入文件，也不应手改。
+它是离线检查产物，不是运行时输入，也不应手改。

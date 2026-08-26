@@ -6,39 +6,7 @@ data = {
     level: $path("/batteryCapacityLevelDesc")
 }
 
-Column(
-  "compact",
-  {"_advancedComponent": "BatteryOverview", "width": "matchParent", "height": "matchParent", "itemMargin": 4, "justifyContent": "spaceBetween", "alignItems": "start", "clip": true, "constraintSize": {"minWidth": 0, "minHeight": 0}},
-  Text(
-      "设备电量",
-      "subtitle",
-      {"width": "matchParent", "fontSize": 16, "fontWeight": 700, "fontColor": "#E6000000", "maxLines": 1, "textOverflow": "ellipsis", "constraintSize": {"minWidth": 0, "minHeight": 0}}
-    ),
-  Text(
-      `电量 ${data.percentText}，${data.level}，${data.charging}`,
-      "body",
-      {"width": "matchParent", "fontSize": 12, "fontWeight": 400, "fontColor": "#99000000", "maxLines": 2, "textOverflow": "ellipsis", "constraintSize": {"minWidth": 0, "minHeight": 0}}
-    ),
-  Stack(
-      "overlay",
-      {"width": "matchParent", "height": "matchParent", "layoutWeight": 1, "alignContent": "bottomStart", "constraintSize": {"minWidth": 0, "minHeight": 0}},
-      Stack(
-            "overlay",
-            {"width": 52, "height": 52, "alignContent": "center", "flexShrink": 0},
-            Progress(
-                    {"value": data.percent, "total": 100, "type": "ring", "color": "#FFF9A01E", "backgroundColor": "#1A000000", "width": 52, "height": 52, "strokeWidth": 6}
-                  ),
-            IfPresent(
-                    props.batteryIcon,
-                    Image(
-                              props.batteryIcon,
-                              "icon",
-                              {"width": 24, "height": 24, "objectFit": "contain", "fillColor": "#99000000"}
-                            )
-                  )
-          )
-    )
-)
+UseComponent("BatteryOverview.FullStatusSummary@1")
 #End
 
 #Template BatteryOverviewNormalHero@1(props: { batteryIcon?: asset })
@@ -129,39 +97,7 @@ data = {
     level: $path("/batteryCapacityLevelDesc")
 }
 
-Column(
-  "compact",
-  {"_advancedComponent": "BatteryOverview", "width": "matchParent", "height": "matchParent", "itemMargin": 4, "justifyContent": "spaceBetween", "alignItems": "start", "clip": true, "constraintSize": {"minWidth": 0, "minHeight": 0}},
-  Text(
-      "设备电量",
-      "subtitle",
-      {"width": "matchParent", "fontSize": 16, "fontWeight": 700, "fontColor": "#E6000000", "maxLines": 1, "textOverflow": "ellipsis", "constraintSize": {"minWidth": 0, "minHeight": 0}}
-    ),
-  Text(
-      `电量 ${data.percentText}，${data.level}，${data.charging}`,
-      "body",
-      {"width": "matchParent", "fontSize": 12, "fontWeight": 400, "fontColor": "#99000000", "maxLines": 2, "textOverflow": "ellipsis", "constraintSize": {"minWidth": 0, "minHeight": 0}}
-    ),
-  Stack(
-      "overlay",
-      {"width": "matchParent", "height": "matchParent", "layoutWeight": 1, "alignContent": "bottomStart", "constraintSize": {"minWidth": 0, "minHeight": 0}},
-      Stack(
-            "overlay",
-            {"width": 52, "height": 52, "alignContent": "center", "flexShrink": 0},
-            Progress(
-                    {"value": data.percent, "total": 100, "type": "ring", "color": "#FFF9A01E", "backgroundColor": "#1A000000", "width": 52, "height": 52, "strokeWidth": 6}
-                  ),
-            IfPresent(
-                    props.batteryIcon,
-                    Image(
-                              props.batteryIcon,
-                              "icon",
-                              {"width": 24, "height": 24, "objectFit": "contain", "fillColor": "#99000000"}
-                            )
-                  )
-          )
-    )
-)
+UseComponent("BatteryOverview.FullStatusSummary@1")
 #End
 
 #Template BatteryOverviewLowFull@1(props: { batteryIcon?: asset })
@@ -172,39 +108,7 @@ data = {
     level: $path("/batteryCapacityLevelDesc")
 }
 
-Column(
-  "compact",
-  {"_advancedComponent": "BatteryOverview", "width": "matchParent", "height": "matchParent", "itemMargin": 4, "justifyContent": "spaceBetween", "alignItems": "start", "clip": true, "constraintSize": {"minWidth": 0, "minHeight": 0}},
-  Text(
-      "设备电量",
-      "subtitle",
-      {"width": "matchParent", "fontSize": 16, "fontWeight": 700, "fontColor": "#E6000000", "maxLines": 1, "textOverflow": "ellipsis", "constraintSize": {"minWidth": 0, "minHeight": 0}}
-    ),
-  Text(
-      `电量 ${data.percentText}，${data.level}，${data.charging}`,
-      "body",
-      {"width": "matchParent", "fontSize": 12, "fontWeight": 400, "fontColor": "#99000000", "maxLines": 2, "textOverflow": "ellipsis", "constraintSize": {"minWidth": 0, "minHeight": 0}}
-    ),
-  Stack(
-      "overlay",
-      {"width": "matchParent", "height": "matchParent", "layoutWeight": 1, "alignContent": "bottomStart", "constraintSize": {"minWidth": 0, "minHeight": 0}},
-      Stack(
-            "overlay",
-            {"width": 52, "height": 52, "alignContent": "center", "flexShrink": 0},
-            Progress(
-                    {"value": data.percent, "total": 100, "type": "ring", "color": "#FFF9A01E", "backgroundColor": "#1A000000", "width": 52, "height": 52, "strokeWidth": 6}
-                  ),
-            IfPresent(
-                    props.batteryIcon,
-                    Image(
-                              props.batteryIcon,
-                              "icon",
-                              {"width": 24, "height": 24, "objectFit": "contain", "fillColor": "#99000000"}
-                            )
-                  )
-          )
-    )
-)
+UseComponent("BatteryOverview.FullStatusSummary@1")
 #End
 
 #Template BatteryOverviewNormalWideFull@1(props: { batteryIcon?: asset })
