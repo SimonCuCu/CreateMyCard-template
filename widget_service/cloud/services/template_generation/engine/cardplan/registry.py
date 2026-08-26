@@ -21,6 +21,7 @@ from services.template_generation.engine.advanced.models import (
     UxLayoutComponentCapability,
 )
 
+from .compression import intern_template_definitions
 from .models import BusinessTemplateGroup, TemplateDefinition, TemplateVariant, ThemeDefinition
 from .provider_bundle import LoadedProviderBundle, load_provider_bundles
 from .retrieval_index import (
@@ -69,8 +70,11 @@ class CardPlanRegistry:
             for item in template_payload.get("templates", [])
         )
         provider_bundles = load_provider_bundles(self.source_root / "providers")
-        provider_templates = tuple(
+        loaded_provider_templates = tuple(
             definition for bundle in provider_bundles for definition in bundle.templates
+        )
+        provider_templates, self.template_interning_metrics = intern_template_definitions(
+            loaded_provider_templates
         )
         themes = tuple(
             ThemeDefinition.model_validate(item) for item in theme_payload.get("themes", [])

@@ -27,6 +27,9 @@ await request_template_source_dsl(
 - 业务模板在对应 Provider 的 `templates` 条目中直接声明 `businessId` 与 `capabilityId`，Registry 按模板
   派生业务分组；布局组件由 Layout Provider 的 `provider.json#layoutComponents` 定义。中央 UX 配置不重复
   维护组件和模板归属。
+- Registry 加载全部 Provider 模板后，对不可变 `TemplateNode` 执行结构哈希驻留；值完全相同的子树共享
+  同一 DAG 节点，模板 ID、Provider 源文件、数据契约和最终展开结果保持不变。近似候选只进入只读分析报告，
+  不自动改变渲染结构。
 - 禁用项在首层 Prompt 构造前过滤，二层 Provider 规则和布局候选也应用同一结果；服务端契约会再次拒绝
   被禁用的模板。
 - 模板模块只返回当前 Processor 可直接消费的源 DSL 字符串，不接收主服务对象，也不调用
