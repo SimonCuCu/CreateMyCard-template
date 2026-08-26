@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import Counter, defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -242,7 +242,7 @@ class InterningMetrics:
     node_reduction_ratio: float
 
 
-_DAG_ARTIFACT_VERSION = "compressed-provider-component-dag/1"
+_DAG_ARTIFACT_VERSION = "compressed-provider-component-dag/2"
 
 
 class TemplateCompressionAnalyzer:
@@ -448,10 +448,14 @@ def template_interning_metrics(
 
 def serialize_compressed_component_dag(
     definitions: tuple[TemplateDefinition, ...],
+    *,
+    root_component_ids: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Serialize the lossless shared Provider DAG for inspection or offline loading."""
     interned_definitions, metrics = intern_template_definitions(definitions)
+    configured_root_ids = dict(root_component_ids or {})
     nodes: dict[str, dict[str, Any]] = {}
+    root_records: list[tuple[dict[str, Any], str, str]] = []
 
     def serialize_node(node: TemplateNode) -> str:
         child_node_ids = tuple(serialize_node(child) for child in node.children)
@@ -476,8 +480,21 @@ def serialize_compressed_component_dag(
             raise ValueError(f"Template has no serializable variants: {definition.wire_id}")
         for variant, source_variant in zip(variants, definition.variants, strict=True):
             variant.pop("root", None)
-            variant["rootNodeId"] = serialize_node(source_variant.root)
+            root_records.append(
+                (
+                    variant,
+                    definition.wire_id,
+                    serialize_node(source_variant.root),
+                )
+            )
         templates.append(payload)
+    root_component_ids_by_digest = _root_component_ids_by_digest(
+        root_records,
+        configured_root_ids,
+    )
+    for variant, _template_id, root_digest in root_records:
+        variant["rootComponentId"] = root_component_ids_by_digest[root_digest]
+        variant["rootContentDigest"] = f"sha256:{root_digest}"
     return {
         "artifactVersion": _DAG_ARTIFACT_VERSION,
         "sourceFormat": "cardtpl/1",
@@ -490,12 +507,42 @@ def serialize_compressed_component_dag(
 def write_compressed_component_dag(
     definitions: tuple[TemplateDefinition, ...],
     output_path: Path,
+    *,
+    root_component_ids: Mapping[str, str] | None = None,
 ) -> None:
     """Write a deterministic, human-inspectable compressed Provider DAG."""
-    payload = serialize_compressed_component_dag(definitions)
+    payload = serialize_compressed_component_dag(
+        definitions,
+        root_component_ids=root_component_ids,
+    )
     content = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(content, encoding="utf-8")
+
+
+def _root_component_ids_by_digest(
+    root_records: list[tuple[dict[str, Any], str, str]],
+    configured_root_ids: Mapping[str, str],
+) -> dict[str, str]:
+    by_digest: dict[str, list[str]] = defaultdict(list)
+    for _variant, template_id, root_digest in root_records:
+        by_digest[root_digest].append(template_id)
+    result: dict[str, str] = {}
+    for root_digest, template_ids in by_digest.items():
+        configured_ids = {
+            configured_root_ids[template_id]
+            for template_id in template_ids
+            if template_id in configured_root_ids
+        }
+        if len(configured_ids) > 1:
+            names = ", ".join(sorted(configured_ids))
+            raise ValueError(f"shared root has conflicting component IDs: {names}")
+        if configured_ids:
+            result[root_digest] = configured_ids.pop()
+            continue
+        canonical_template_id = min(template_ids)
+        result[root_digest] = f"{canonical_template_id}.Root"
+    return result
 
 
 def canonicalize_definition(definition: TemplateDefinition) -> tuple[CanonicalTemplate, ...]:

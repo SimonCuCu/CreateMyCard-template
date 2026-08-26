@@ -1,0 +1,8 @@
+{
+  "format": "compression-component-labels/1",
+  "rootComponentIds": {
+    "BatteryOverviewChargingFull@1": "BatteryOverview.FullStatusSummary@1",
+    "BatteryOverviewLowFull@1": "BatteryOverview.FullStatusSummary@1",
+    "BatteryOverviewNormalFull@1": "BatteryOverview.FullStatusSummary@1"
+  }
+}

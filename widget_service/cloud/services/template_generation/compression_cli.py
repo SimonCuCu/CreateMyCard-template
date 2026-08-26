@@ -39,6 +39,20 @@ def provider_definitions() -> tuple:
     )
 
 
+def root_component_ids() -> dict[str, str]:
+    registry = get_cardplan_registry()
+    path = registry.source_root / "compression-component-labels.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("compression component labels must be an object")
+    value = payload.get("rootComponentIds")
+    if not isinstance(value, dict):
+        raise ValueError("compression rootComponentIds must be an object")
+    if not all(isinstance(key, str) and isinstance(item, str) for key, item in value.items()):
+        raise ValueError("compression rootComponentIds must map strings to strings")
+    return value
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Analyze Provider Templates without modifying source assets."
@@ -61,7 +75,11 @@ def main() -> None:
     )
     report = analyzer.analyze(definitions).to_json_dict()
     if arguments.write_compressed_dag is not None:
-        write_compressed_component_dag(definitions, arguments.write_compressed_dag)
+        write_compressed_component_dag(
+            definitions,
+            arguments.write_compressed_dag,
+            root_component_ids=root_component_ids(),
+        )
     content = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
     if arguments.output is None:
         print(content, end="")

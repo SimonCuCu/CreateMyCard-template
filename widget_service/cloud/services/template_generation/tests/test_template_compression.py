@@ -165,11 +165,33 @@ def test_serialized_dag_uses_one_node_entry_for_equal_roots() -> None:
     artifact = serialize_compressed_component_dag((first, second))
 
     templates = artifact["templates"]
-    first_root_id = templates[0]["variants"][0]["rootNodeId"]
-    second_root_id = templates[1]["variants"][0]["rootNodeId"]
-    assert artifact["artifactVersion"] == "compressed-provider-component-dag/1"
-    assert first_root_id == second_root_id
-    assert first_root_id in artifact["nodes"]
+    first_variant = templates[0]["variants"][0]
+    second_variant = templates[1]["variants"][0]
+    first_digest = first_variant["rootContentDigest"].removeprefix("sha256:")
+    second_digest = second_variant["rootContentDigest"].removeprefix("sha256:")
+    assert artifact["artifactVersion"] == "compressed-provider-component-dag/2"
+    assert first_digest == second_digest
+    assert first_variant["rootComponentId"] == second_variant["rootComponentId"]
+    assert first_variant["rootComponentId"] == "BatteryChargingFull@1.Root"
+    assert first_digest in artifact["nodes"]
+
+
+def test_configured_root_component_id_labels_a_shared_root() -> None:
+    first = _definition("BatteryNormalFull", _node("Column", _ring(52), width=160))
+    second = _definition("BatteryChargingFull", _node("Column", _ring(52), width=160))
+
+    artifact = serialize_compressed_component_dag(
+        (first, second),
+        root_component_ids={
+            "BatteryNormalFull@1": "BatteryOverview.FullStatusSummary@1",
+            "BatteryChargingFull@1": "BatteryOverview.FullStatusSummary@1",
+        },
+    )
+
+    component_ids = {
+        item["variants"][0]["rootComponentId"] for item in artifact["templates"]
+    }
+    assert component_ids == {"BatteryOverview.FullStatusSummary@1"}
 
 
 def test_compressed_dag_writer_emits_readable_json(tmp_path) -> None:

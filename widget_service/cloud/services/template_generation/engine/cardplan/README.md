@@ -24,7 +24,8 @@ compressed-provider-component-dag.json
 ## 如何查看 Battery
 
 在 generated/compressed-provider-component-dag.json 的 templates 中查找
-BatteryOverviewNormalFull。其 variants[].rootNodeId 是压缩树入口；再以该 ID 到 nodes 中查找，
-递归读取 childNodeIds 即可展开压缩后的组件树。多个模板指向同一个 ID，代表它们复用了同一组件子树。
+BatteryOverviewNormalFull。其 variants[].rootComponentId 是可读的压缩树名称；
+rootContentDigest 是机器校验的内容摘要。以摘要去掉 sha256: 前缀后到 nodes 中查找，递归读取
+childNodeIds 即可展开压缩后的组件树。多个模板有相同的名称和摘要，代表它们复用了同一组件子树。
 
 这个 JSON 是 compressed-provider-component-dag/1 的检查快照，不是 cardtpl/1 输入文件，也不应手改。

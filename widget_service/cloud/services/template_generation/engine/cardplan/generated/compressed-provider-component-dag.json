@@ -1,5 +1,5 @@
 {
-  "artifactVersion": "compressed-provider-component-dag/1",
+  "artifactVersion": "compressed-provider-component-dag/2",
   "metrics": {
     "node_occurrences": 841,
     "node_reduction_ratio": 0.504162,
@@ -30104,7 +30104,8 @@
             "appName",
             "duration"
           ],
-          "rootNodeId": "91ebf4ec96731de4b884815e31e20270fe0fd3e86dac1d2d338da033ad477ab5",
+          "rootComponentId": "AppUsageOverviewFull@1.Root",
+          "rootContentDigest": "sha256:91ebf4ec96731de4b884815e31e20270fe0fd3e86dac1d2d338da033ad477ab5",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -30201,7 +30202,8 @@
             "appName",
             "duration"
           ],
-          "rootNodeId": "70c20f2f6c6b5d925b62f0fb2185ca63bda99b3c660b853e2c12cb6e56ba9661",
+          "rootComponentId": "AppUsageOverviewHero@1.Root",
+          "rootContentDigest": "sha256:70c20f2f6c6b5d925b62f0fb2185ca63bda99b3c660b853e2c12cb6e56ba9661",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -30298,7 +30300,8 @@
             "appName",
             "duration"
           ],
-          "rootNodeId": "8ec27d24ea95139a30f13a366a57ebb1cc0a2231537e37cbd3f4c467fc36ba09",
+          "rootComponentId": "AppUsageOverviewWideFull@1.Root",
+          "rootContentDigest": "sha256:8ec27d24ea95139a30f13a366a57ebb1cc0a2231537e37cbd3f4c467fc36ba09",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -30395,7 +30398,8 @@
             "appName",
             "duration"
           ],
-          "rootNodeId": "8ec27d24ea95139a30f13a366a57ebb1cc0a2231537e37cbd3f4c467fc36ba09",
+          "rootComponentId": "AppUsageOverviewWideFull@1.Root",
+          "rootContentDigest": "sha256:8ec27d24ea95139a30f13a366a57ebb1cc0a2231537e37cbd3f4c467fc36ba09",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -30501,7 +30505,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "2cbdf5eeeebbcbaf0f932eaf04649b473cdfe0ce55e72ea76cbe186e5887bdf4",
+          "rootComponentId": "BatteryOverview.FullStatusSummary@1",
+          "rootContentDigest": "sha256:2cbdf5eeeebbcbaf0f932eaf04649b473cdfe0ce55e72ea76cbe186e5887bdf4",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -30610,7 +30615,8 @@
             "percent",
             "level"
           ],
-          "rootNodeId": "d0bda3cf44ec6861a5d8a65c6e73c82846fc5925f5bfa522774e2bd490cd8011",
+          "rootComponentId": "BatteryOverviewNormalHero@1.Root",
+          "rootContentDigest": "sha256:d0bda3cf44ec6861a5d8a65c6e73c82846fc5925f5bfa522774e2bd490cd8011",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -30716,7 +30722,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "2cbdf5eeeebbcbaf0f932eaf04649b473cdfe0ce55e72ea76cbe186e5887bdf4",
+          "rootComponentId": "BatteryOverview.FullStatusSummary@1",
+          "rootContentDigest": "sha256:2cbdf5eeeebbcbaf0f932eaf04649b473cdfe0ce55e72ea76cbe186e5887bdf4",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -30822,7 +30829,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "2cbdf5eeeebbcbaf0f932eaf04649b473cdfe0ce55e72ea76cbe186e5887bdf4",
+          "rootComponentId": "BatteryOverview.FullStatusSummary@1",
+          "rootContentDigest": "sha256:2cbdf5eeeebbcbaf0f932eaf04649b473cdfe0ce55e72ea76cbe186e5887bdf4",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -30928,7 +30936,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "014efaa7243e4cf4476ff5f771f98b1f99568865847a28295af4671ec33d8b7b",
+          "rootComponentId": "BatteryOverviewChargingWideFull@1.Root",
+          "rootContentDigest": "sha256:014efaa7243e4cf4476ff5f771f98b1f99568865847a28295af4671ec33d8b7b",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -31034,7 +31043,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "014efaa7243e4cf4476ff5f771f98b1f99568865847a28295af4671ec33d8b7b",
+          "rootComponentId": "BatteryOverviewChargingWideFull@1.Root",
+          "rootContentDigest": "sha256:014efaa7243e4cf4476ff5f771f98b1f99568865847a28295af4671ec33d8b7b",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -31140,7 +31150,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "014efaa7243e4cf4476ff5f771f98b1f99568865847a28295af4671ec33d8b7b",
+          "rootComponentId": "BatteryOverviewChargingWideFull@1.Root",
+          "rootContentDigest": "sha256:014efaa7243e4cf4476ff5f771f98b1f99568865847a28295af4671ec33d8b7b",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -31246,7 +31257,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "b5e64c0455ede4b7af5719baca5e728563ec5c64c4481df5ea6a225412990703",
+          "rootComponentId": "BatteryOverviewChargingCompact@1.Root",
+          "rootContentDigest": "sha256:b5e64c0455ede4b7af5719baca5e728563ec5c64c4481df5ea6a225412990703",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -31352,7 +31364,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "b5e64c0455ede4b7af5719baca5e728563ec5c64c4481df5ea6a225412990703",
+          "rootComponentId": "BatteryOverviewChargingCompact@1.Root",
+          "rootContentDigest": "sha256:b5e64c0455ede4b7af5719baca5e728563ec5c64c4481df5ea6a225412990703",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -31458,7 +31471,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "b5e64c0455ede4b7af5719baca5e728563ec5c64c4481df5ea6a225412990703",
+          "rootComponentId": "BatteryOverviewChargingCompact@1.Root",
+          "rootContentDigest": "sha256:b5e64c0455ede4b7af5719baca5e728563ec5c64c4481df5ea6a225412990703",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -31542,7 +31556,8 @@
             "percent",
             "percentText"
           ],
-          "rootNodeId": "ae9b1149e8d9b7b2848b7067e7e8a280e4f1e46a939100d6de9f307c04712d63",
+          "rootComponentId": "BatteryOverviewChargingPhoneCompact@1.Root",
+          "rootContentDigest": "sha256:ae9b1149e8d9b7b2848b7067e7e8a280e4f1e46a939100d6de9f307c04712d63",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -31626,7 +31641,8 @@
             "percent",
             "percentText"
           ],
-          "rootNodeId": "ae9b1149e8d9b7b2848b7067e7e8a280e4f1e46a939100d6de9f307c04712d63",
+          "rootComponentId": "BatteryOverviewChargingPhoneCompact@1.Root",
+          "rootContentDigest": "sha256:ae9b1149e8d9b7b2848b7067e7e8a280e4f1e46a939100d6de9f307c04712d63",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -31710,7 +31726,8 @@
             "percent",
             "percentText"
           ],
-          "rootNodeId": "ae9b1149e8d9b7b2848b7067e7e8a280e4f1e46a939100d6de9f307c04712d63",
+          "rootComponentId": "BatteryOverviewChargingPhoneCompact@1.Root",
+          "rootContentDigest": "sha256:ae9b1149e8d9b7b2848b7067e7e8a280e4f1e46a939100d6de9f307c04712d63",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -31806,7 +31823,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "ebdde0f79763b840f444a80a377733cb964914aec5e99a0659edc68b6169275e",
+          "rootComponentId": "BatteryOverviewChargingWeatherCompact@1.Root",
+          "rootContentDigest": "sha256:ebdde0f79763b840f444a80a377733cb964914aec5e99a0659edc68b6169275e",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -31902,7 +31920,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "ebdde0f79763b840f444a80a377733cb964914aec5e99a0659edc68b6169275e",
+          "rootComponentId": "BatteryOverviewChargingWeatherCompact@1.Root",
+          "rootContentDigest": "sha256:ebdde0f79763b840f444a80a377733cb964914aec5e99a0659edc68b6169275e",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -31998,7 +32017,8 @@
             "charging",
             "level"
           ],
-          "rootNodeId": "ebdde0f79763b840f444a80a377733cb964914aec5e99a0659edc68b6169275e",
+          "rootComponentId": "BatteryOverviewChargingWeatherCompact@1.Root",
+          "rootContentDigest": "sha256:ebdde0f79763b840f444a80a377733cb964914aec5e99a0659edc68b6169275e",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -32073,7 +32093,8 @@
           "requiredBindings": [
             "startDate"
           ],
-          "rootNodeId": "321eb72bd35504334f285453e59da850a544656cb70be472e4448ded1d57adb8",
+          "rootComponentId": "DateOverviewCompact@1.Root",
+          "rootContentDigest": "sha256:321eb72bd35504334f285453e59da850a544656cb70be472e4448ded1d57adb8",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -32153,7 +32174,8 @@
             "startDate",
             "updatedAt"
           ],
-          "rootNodeId": "4cb562efa131fff8118107465b971debbebab6fe4027cfb54e1d044a1ea42963",
+          "rootComponentId": "DateOverviewFull@1.Root",
+          "rootContentDigest": "sha256:4cb562efa131fff8118107465b971debbebab6fe4027cfb54e1d044a1ea42963",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -32253,7 +32275,8 @@
             "start",
             "end"
           ],
-          "rootNodeId": "8d4e13680d4b2e182a7ce2a8abeb1784022f374bf4ec05edd2cffe5dabe2c88f",
+          "rootComponentId": "ScheduleOverviewNextEventFull@1.Root",
+          "rootContentDigest": "sha256:8d4e13680d4b2e182a7ce2a8abeb1784022f374bf4ec05edd2cffe5dabe2c88f",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -32367,7 +32390,8 @@
             "start",
             "end"
           ],
-          "rootNodeId": "2ad2e8871e37d7ec8e6f1bbb2548aed36e63f5558b25b621f8d24d5fbba1cab4",
+          "rootComponentId": "ScheduleOverviewNextEventLocationFull@1.Root",
+          "rootContentDigest": "sha256:2ad2e8871e37d7ec8e6f1bbb2548aed36e63f5558b25b621f8d24d5fbba1cab4",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -32463,7 +32487,8 @@
             "start",
             "end"
           ],
-          "rootNodeId": "e908eeeb2a839351ca3f9a6bbb915a2c3fcf91642e3733925a0084754024512c",
+          "rootComponentId": "ScheduleOverviewMeetingCompact@1.Root",
+          "rootContentDigest": "sha256:e908eeeb2a839351ca3f9a6bbb915a2c3fcf91642e3733925a0084754024512c",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -32573,7 +32598,8 @@
             "start",
             "end"
           ],
-          "rootNodeId": "0378dd742693f594ac53f5c9ffff47ae7751b6e3a2d86be474e579a2d31e4df1",
+          "rootComponentId": "ScheduleOverviewMeetingLocationCompact@1.Root",
+          "rootContentDigest": "sha256:0378dd742693f594ac53f5c9ffff47ae7751b6e3a2d86be474e579a2d31e4df1",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -32683,7 +32709,8 @@
             "start",
             "end"
           ],
-          "rootNodeId": "e3acfa8097b81813a371aae699ec91fe2dfb347b944cefe842bf636acaa49379",
+          "rootComponentId": "ScheduleOverviewMeetingWideFull@1.Root",
+          "rootContentDigest": "sha256:e3acfa8097b81813a371aae699ec91fe2dfb347b944cefe842bf636acaa49379",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -32785,7 +32812,8 @@
             "start",
             "end"
           ],
-          "rootNodeId": "b07d1dcf8d50627cbb11edec4c13f7673977bee2e6bdbde82e651764239dba36",
+          "rootComponentId": "ScheduleOverviewMeetingSourceCompact@1.Root",
+          "rootContentDigest": "sha256:b07d1dcf8d50627cbb11edec4c13f7673977bee2e6bdbde82e651764239dba36",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -32901,7 +32929,8 @@
             "start",
             "end"
           ],
-          "rootNodeId": "465d2621f96ad7040ab931f03ef4956b8497fc512fbcfadd610dab42a2b8073f",
+          "rootComponentId": "ScheduleOverviewMeetingLocationSourceCompact@1.Root",
+          "rootContentDigest": "sha256:465d2621f96ad7040ab931f03ef4956b8497fc512fbcfadd610dab42a2b8073f",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -33017,7 +33046,8 @@
             "start",
             "end"
           ],
-          "rootNodeId": "6f270e9b50a0461190d86ed8d8c1de20f752b03fe9f6de7a94a16afb13a52b88",
+          "rootComponentId": "ScheduleOverviewMeetingSourceWideFull@1.Root",
+          "rootContentDigest": "sha256:6f270e9b50a0461190d86ed8d8c1de20f752b03fe9f6de7a94a16afb13a52b88",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -33085,7 +33115,8 @@
           "requiredBindings": [
             "days"
           ],
-          "rootNodeId": "2d3563bca6072935de9c16c741fb8bcff8b44d589f23087092b36743fb728aa0",
+          "rootComponentId": "CountdownOverviewFull@1.Root",
+          "rootContentDigest": "sha256:2d3563bca6072935de9c16c741fb8bcff8b44d589f23087092b36743fb728aa0",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -33173,7 +33204,8 @@
             "connected",
             "name"
           ],
-          "rootNodeId": "0ba3d448328ff3f44cf3fa4d65ec77e28d6297e5b4025b0602683f2d371cbfb9",
+          "rootComponentId": "BluetoothDeviceOverviewDisconnectedFull@1.Root",
+          "rootContentDigest": "sha256:0ba3d448328ff3f44cf3fa4d65ec77e28d6297e5b4025b0602683f2d371cbfb9",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -33261,7 +33293,8 @@
             "connected",
             "name"
           ],
-          "rootNodeId": "257b003db3a194b95193b2bb0092d7501f6d0174df72ba7d5db4f2ebe4a422a6",
+          "rootComponentId": "BluetoothDeviceOverviewConnectionFull@1.Root",
+          "rootContentDigest": "sha256:257b003db3a194b95193b2bb0092d7501f6d0174df72ba7d5db4f2ebe4a422a6",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -33331,7 +33364,8 @@
           "requiredBindings": [
             "connected"
           ],
-          "rootNodeId": "beb2dd2c25d57ad4023225347c766afebf22ee74ed747622abc2b6cfebe7baec",
+          "rootComponentId": "BluetoothDeviceOverviewDisconnectedPhoneCompact@1.Root",
+          "rootContentDigest": "sha256:beb2dd2c25d57ad4023225347c766afebf22ee74ed747622abc2b6cfebe7baec",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -33448,7 +33482,8 @@
           "requiredBindings": [
             "connected"
           ],
-          "rootNodeId": "6859434f3d7d22d4ceb69282010084054c17ccae6b9cf05e65a6340cd7c34af9",
+          "rootComponentId": "BluetoothDeviceOverviewEarbudsPhoneCompact@1.Root",
+          "rootContentDigest": "sha256:6859434f3d7d22d4ceb69282010084054c17ccae6b9cf05e65a6340cd7c34af9",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -33577,7 +33612,8 @@
             "connected",
             "name"
           ],
-          "rootNodeId": "e8ebce0d9c56646214dbfc2353b96d454a08ad40ee3cb200f0165e1f537756b5",
+          "rootComponentId": "BluetoothDeviceOverviewEarbudsPhoneWideFull@1.Root",
+          "rootContentDigest": "sha256:e8ebce0d9c56646214dbfc2353b96d454a08ad40ee3cb200f0165e1f537756b5",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -33706,7 +33742,8 @@
             "connected",
             "name"
           ],
-          "rootNodeId": "d41e62e3d7086e809b036e417a169b8f6ab9eae5a38e155b4e2243c8ec7a355f",
+          "rootComponentId": "BluetoothDeviceOverviewEarbudsDynamicWideFull@1.Root",
+          "rootContentDigest": "sha256:d41e62e3d7086e809b036e417a169b8f6ab9eae5a38e155b4e2243c8ec7a355f",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -33804,7 +33841,8 @@
             "name",
             "battery"
           ],
-          "rootNodeId": "6d4672e477fe3f4345235b23ba47668193dd631efaf1397a1cc3934c5127c5ef",
+          "rootComponentId": "BluetoothDeviceOverviewCaseFull@1.Root",
+          "rootContentDigest": "sha256:6d4672e477fe3f4345235b23ba47668193dd631efaf1397a1cc3934c5127c5ef",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -33906,7 +33944,8 @@
             "name",
             "left"
           ],
-          "rootNodeId": "3de3e1f85f0b7564a6500f6d3d02e8adca220a914c50fa94bd9944ce4e9c93cb",
+          "rootComponentId": "BluetoothDeviceOverviewLeftEarbudCompact@1.Root",
+          "rootContentDigest": "sha256:3de3e1f85f0b7564a6500f6d3d02e8adca220a914c50fa94bd9944ce4e9c93cb",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -34008,7 +34047,8 @@
             "name",
             "right"
           ],
-          "rootNodeId": "b4160e3f9d99681b0fb11db69f4d2b720487f29933fa112af72d92cfd2089771",
+          "rootComponentId": "BluetoothDeviceOverviewRightEarbudCompact@1.Root",
+          "rootContentDigest": "sha256:b4160e3f9d99681b0fb11db69f4d2b720487f29933fa112af72d92cfd2089771",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -34124,7 +34164,8 @@
             "left",
             "right"
           ],
-          "rootNodeId": "ec6e08292116cdc29dc01992a61c71d9670f5699cabdddddb88eb1b0b7476117",
+          "rootComponentId": "BluetoothDeviceOverviewEarbudPairFull@1.Root",
+          "rootContentDigest": "sha256:ec6e08292116cdc29dc01992a61c71d9670f5699cabdddddb88eb1b0b7476117",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -34240,7 +34281,8 @@
             "left",
             "right"
           ],
-          "rootNodeId": "ec6e08292116cdc29dc01992a61c71d9670f5699cabdddddb88eb1b0b7476117",
+          "rootComponentId": "BluetoothDeviceOverviewEarbudPairFull@1.Root",
+          "rootContentDigest": "sha256:ec6e08292116cdc29dc01992a61c71d9670f5699cabdddddb88eb1b0b7476117",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -34366,7 +34408,8 @@
             "left",
             "right"
           ],
-          "rootNodeId": "35cacfef6086f476c7d6538ddba3d1c280cd3287f49bff0f4b04525f546d3041",
+          "rootComponentId": "BluetoothDeviceOverviewCompleteWideFull@1.Root",
+          "rootContentDigest": "sha256:35cacfef6086f476c7d6538ddba3d1c280cd3287f49bff0f4b04525f546d3041",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -34468,7 +34511,8 @@
             "left",
             "right"
           ],
-          "rootNodeId": "5b647d117f9e6c7e9966474db7c7eb951b6800947ed26761eaa12ce0a06efac6",
+          "rootComponentId": "BluetoothDeviceOverviewEarbudPairPhoneCompact@1.Root",
+          "rootContentDigest": "sha256:5b647d117f9e6c7e9966474db7c7eb951b6800947ed26761eaa12ce0a06efac6",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -34590,7 +34634,8 @@
             "left",
             "right"
           ],
-          "rootNodeId": "909bc4b0917de3af056a4b1f4848cbc7877ff8e1a8ff15f501293b82fecba19a",
+          "rootComponentId": "BluetoothDeviceOverviewCompletePhoneWideFull@1.Root",
+          "rootContentDigest": "sha256:909bc4b0917de3af056a4b1f4848cbc7877ff8e1a8ff15f501293b82fecba19a",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -34664,7 +34709,8 @@
           "requiredBindings": [
             "steps"
           ],
-          "rootNodeId": "c62208ca7e034b2e89bcf84cfbc3573289056061afe69cace3fa53dbc5b47caa",
+          "rootComponentId": "ActivityOverviewCompact@1.Root",
+          "rootContentDigest": "sha256:c62208ca7e034b2e89bcf84cfbc3573289056061afe69cace3fa53dbc5b47caa",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -34738,7 +34784,8 @@
           "requiredBindings": [
             "steps"
           ],
-          "rootNodeId": "b9fbcfe4e3c493e02068b2de998f2fc1af8e42b8b5a02731bd3857f072e4b953",
+          "rootComponentId": "ActivityOverviewHero@1.Root",
+          "rootContentDigest": "sha256:b9fbcfe4e3c493e02068b2de998f2fc1af8e42b8b5a02731bd3857f072e4b953",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -34842,7 +34889,8 @@
             "calories",
             "distance"
           ],
-          "rootNodeId": "dafbdb050353edbd9b0c94b5a0e3312cc464e89efb799c1ee844a4331883369f",
+          "rootComponentId": "ActivityOverviewFull@1.Root",
+          "rootContentDigest": "sha256:dafbdb050353edbd9b0c94b5a0e3312cc464e89efb799c1ee844a4331883369f",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -34956,7 +35004,8 @@
             "distance",
             "targetDate"
           ],
-          "rootNodeId": "5eb1f5d5029fbe8910e648ba5042d1d8182844b646e93e9287f7522556600b85",
+          "rootComponentId": "ActivityOverviewWideFull@1.Root",
+          "rootContentDigest": "sha256:5eb1f5d5029fbe8910e648ba5042d1d8182844b646e93e9287f7522556600b85",
           "size": "default",
           "supportedCardSizes": [
             "2x4"
@@ -35062,7 +35111,8 @@
             "duration",
             "endTime"
           ],
-          "rootNodeId": "a3438547e9681317e9a5a9e5adcb76f534a841683c4403a34db73b9f4d7888c6",
+          "rootComponentId": "WorkoutOverviewFull@1.Root",
+          "rootContentDigest": "sha256:a3438547e9681317e9a5a9e5adcb76f534a841683c4403a34db73b9f4d7888c6",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -35130,7 +35180,8 @@
           "requiredBindings": [
             "average"
           ],
-          "rootNodeId": "c37cdef676204a48c716a8cdbfcf41700d76e464c8a8f7683b33c0b8448e92cc",
+          "rootComponentId": "HeartRateOverviewFull@1.Root",
+          "rootContentDigest": "sha256:c37cdef676204a48c716a8cdbfcf41700d76e464c8a8f7683b33c0b8448e92cc",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -35210,7 +35261,8 @@
             "average",
             "updatedAt"
           ],
-          "rootNodeId": "c37a194a1f3ac5daa958ecd9a7d1db444cbae7883dccb55aa1a8c4ab62ea982d",
+          "rootComponentId": "HeartRateOverviewUpdatedFull@1.Root",
+          "rootContentDigest": "sha256:c37a194a1f3ac5daa958ecd9a7d1db444cbae7883dccb55aa1a8c4ab62ea982d",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -35286,7 +35338,8 @@
           "requiredBindings": [
             "average"
           ],
-          "rootNodeId": "b9df22af99379d5569e768f2b480c95c042747b01fea53216c4423c54715fe4c",
+          "rootComponentId": "HeartRateOverviewIconFull@1.Root",
+          "rootContentDigest": "sha256:b9df22af99379d5569e768f2b480c95c042747b01fea53216c4423c54715fe4c",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -35374,7 +35427,8 @@
             "average",
             "updatedAt"
           ],
-          "rootNodeId": "f0fc9a2ce4ab0fc94fcc1e63ec3c7971bd9b34be825a56d9329ffb2ac079527e",
+          "rootComponentId": "HeartRateOverviewUpdatedIconFull@1.Root",
+          "rootContentDigest": "sha256:f0fc9a2ce4ab0fc94fcc1e63ec3c7971bd9b34be825a56d9329ffb2ac079527e",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -35442,7 +35496,8 @@
           "requiredBindings": [
             "average"
           ],
-          "rootNodeId": "0fb47ecb8cfe2273dee20be7e6dbc8db009ecdae29023a0d7b6a14935a32add9",
+          "rootComponentId": "HeartRateOverviewCompact@1.Root",
+          "rootContentDigest": "sha256:0fb47ecb8cfe2273dee20be7e6dbc8db009ecdae29023a0d7b6a14935a32add9",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -35522,7 +35577,8 @@
             "average",
             "updatedAt"
           ],
-          "rootNodeId": "c2ebcd49971c4edb91bc2036c10dfe7914100bcbde89a8687b1f24bb537dcb55",
+          "rootComponentId": "HeartRateOverviewUpdatedCompact@1.Root",
+          "rootContentDigest": "sha256:c2ebcd49971c4edb91bc2036c10dfe7914100bcbde89a8687b1f24bb537dcb55",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -35598,7 +35654,8 @@
           "requiredBindings": [
             "average"
           ],
-          "rootNodeId": "36b0473f1f706154bb7ec0c8e64d205bacc462e3421e50f9c556ee9f0a07c0e7",
+          "rootComponentId": "HeartRateOverviewIconCompact@1.Root",
+          "rootContentDigest": "sha256:36b0473f1f706154bb7ec0c8e64d205bacc462e3421e50f9c556ee9f0a07c0e7",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -35686,7 +35743,8 @@
             "average",
             "updatedAt"
           ],
-          "rootNodeId": "b05fd23a6ad31d80609884dea94006e0045e47bbc46698037fd3116733646b22",
+          "rootComponentId": "HeartRateOverviewUpdatedIconCompact@1.Root",
+          "rootContentDigest": "sha256:b05fd23a6ad31d80609884dea94006e0045e47bbc46698037fd3116733646b22",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -35782,7 +35840,8 @@
             "status",
             "score"
           ],
-          "rootNodeId": "f1f075215000ffb525b6f648ea167619c26b331147583a8da7a1c106a28b384a",
+          "rootComponentId": "SleepOverviewFull@1.Root",
+          "rootContentDigest": "sha256:f1f075215000ffb525b6f648ea167619c26b331147583a8da7a1c106a28b384a",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -35868,7 +35927,8 @@
             "duration",
             "score"
           ],
-          "rootNodeId": "3a60ffd6b02c9f8300e8a20691b8f0b28e9f58f850240892a76dd70f664e1427",
+          "rootComponentId": "SleepOverviewHero@1.Root",
+          "rootContentDigest": "sha256:3a60ffd6b02c9f8300e8a20691b8f0b28e9f58f850240892a76dd70f664e1427",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -35954,7 +36014,8 @@
             "duration",
             "score"
           ],
-          "rootNodeId": "3097765b3669e07dc849b9d2cab7c83ad0af5fc9c452da1d4d94bf4075c27924",
+          "rootComponentId": "SleepOverviewCompact@1.Root",
+          "rootContentDigest": "sha256:3097765b3669e07dc849b9d2cab7c83ad0af5fc9c452da1d4d94bf4075c27924",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -36008,7 +36069,8 @@
             "type": "object"
           },
           "requiredBindings": [],
-          "rootNodeId": "326a79c2a777054abc286ad807f0197a01dfb0a891f992808be0dc3106a260fa",
+          "rootComponentId": "SingleFocusLayout@1.Root",
+          "rootContentDigest": "sha256:326a79c2a777054abc286ad807f0197a01dfb0a891f992808be0dc3106a260fa",
           "size": "default",
           "supportedCardSizes": [],
           "supportedRoles": []
@@ -36060,7 +36122,8 @@
             "type": "object"
           },
           "requiredBindings": [],
-          "rootNodeId": "a13739cfa2206048d93151d8fcb6cdd868a60e117b8d7718a0400328065770dd",
+          "rootComponentId": "HeroActionLayout@1.Root",
+          "rootContentDigest": "sha256:a13739cfa2206048d93151d8fcb6cdd868a60e117b8d7718a0400328065770dd",
           "size": "default",
           "supportedCardSizes": [],
           "supportedRoles": []
@@ -36112,7 +36175,8 @@
             "type": "object"
           },
           "requiredBindings": [],
-          "rootNodeId": "a13739cfa2206048d93151d8fcb6cdd868a60e117b8d7718a0400328065770dd",
+          "rootComponentId": "HeroActionLayout@1.Root",
+          "rootContentDigest": "sha256:a13739cfa2206048d93151d8fcb6cdd868a60e117b8d7718a0400328065770dd",
           "size": "default",
           "supportedCardSizes": [],
           "supportedRoles": []
@@ -36164,7 +36228,8 @@
             "type": "object"
           },
           "requiredBindings": [],
-          "rootNodeId": "be4a98f6a8408f0ddb1f447a21549db484d492d4d74ad6a1c1cccd5e0c8fdf31",
+          "rootComponentId": "HeroSupportActionLayout@1.Root",
+          "rootContentDigest": "sha256:be4a98f6a8408f0ddb1f447a21549db484d492d4d74ad6a1c1cccd5e0c8fdf31",
           "size": "default",
           "supportedCardSizes": [],
           "supportedRoles": []
@@ -36216,7 +36281,8 @@
             "type": "object"
           },
           "requiredBindings": [],
-          "rootNodeId": "5429fd7fad0be3b1cd40f3d1e012af7e77669401b50eb035609bf13e5636cd7a",
+          "rootComponentId": "ActionMatrixLayout@1.Root",
+          "rootContentDigest": "sha256:5429fd7fad0be3b1cd40f3d1e012af7e77669401b50eb035609bf13e5636cd7a",
           "size": "default",
           "supportedCardSizes": [],
           "supportedRoles": []
@@ -36268,7 +36334,8 @@
             "type": "object"
           },
           "requiredBindings": [],
-          "rootNodeId": "86e214f5beb34c7c5f530c240ecf415ad5e3b6fba4672106336ceedf338acd60",
+          "rootComponentId": "ListActionLayout@1.Root",
+          "rootContentDigest": "sha256:86e214f5beb34c7c5f530c240ecf415ad5e3b6fba4672106336ceedf338acd60",
           "size": "default",
           "supportedCardSizes": [],
           "supportedRoles": []
@@ -36320,7 +36387,8 @@
             "type": "object"
           },
           "requiredBindings": [],
-          "rootNodeId": "5429fd7fad0be3b1cd40f3d1e012af7e77669401b50eb035609bf13e5636cd7a",
+          "rootComponentId": "ActionMatrixLayout@1.Root",
+          "rootContentDigest": "sha256:5429fd7fad0be3b1cd40f3d1e012af7e77669401b50eb035609bf13e5636cd7a",
           "size": "default",
           "supportedCardSizes": [],
           "supportedRoles": []
@@ -36372,7 +36440,8 @@
             "type": "object"
           },
           "requiredBindings": [],
-          "rootNodeId": "86e214f5beb34c7c5f530c240ecf415ad5e3b6fba4672106336ceedf338acd60",
+          "rootComponentId": "ListActionLayout@1.Root",
+          "rootContentDigest": "sha256:86e214f5beb34c7c5f530c240ecf415ad5e3b6fba4672106336ceedf338acd60",
           "size": "default",
           "supportedCardSizes": [],
           "supportedRoles": []
@@ -36424,7 +36493,8 @@
             "type": "object"
           },
           "requiredBindings": [],
-          "rootNodeId": "5429fd7fad0be3b1cd40f3d1e012af7e77669401b50eb035609bf13e5636cd7a",
+          "rootComponentId": "ActionMatrixLayout@1.Root",
+          "rootContentDigest": "sha256:5429fd7fad0be3b1cd40f3d1e012af7e77669401b50eb035609bf13e5636cd7a",
           "size": "default",
           "supportedCardSizes": [],
           "supportedRoles": []
@@ -36476,7 +36546,8 @@
             "type": "object"
           },
           "requiredBindings": [],
-          "rootNodeId": "86e214f5beb34c7c5f530c240ecf415ad5e3b6fba4672106336ceedf338acd60",
+          "rootComponentId": "ListActionLayout@1.Root",
+          "rootContentDigest": "sha256:86e214f5beb34c7c5f530c240ecf415ad5e3b6fba4672106336ceedf338acd60",
           "size": "default",
           "supportedCardSizes": [],
           "supportedRoles": []
@@ -36570,7 +36641,8 @@
             "available",
             "total"
           ],
-          "rootNodeId": "0070ffee78b2128682b5ecf29b5a22534984c101da8c768186ae887887e86ed3",
+          "rootComponentId": "ResourceUsageOverviewFull@1.Root",
+          "rootContentDigest": "sha256:0070ffee78b2128682b5ecf29b5a22534984c101da8c768186ae887887e86ed3",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -36666,7 +36738,8 @@
             "available",
             "total"
           ],
-          "rootNodeId": "e1f005df44a6c72bed385c126d2efc6fd520f356ee8a030360fd1feeeb07a5f7",
+          "rootComponentId": "ResourceUsageOverviewCompact@1.Root",
+          "rootContentDigest": "sha256:e1f005df44a6c72bed385c126d2efc6fd520f356ee8a030360fd1feeeb07a5f7",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -36766,7 +36839,8 @@
             "condition",
             "coldLevel"
           ],
-          "rootNodeId": "5b80a41d7fefb1c9975d84749bfa8d9fe48168d78823060c5d5f930dd9088b67",
+          "rootComponentId": "WeatherOverviewCompact@1.Root",
+          "rootContentDigest": "sha256:5b80a41d7fefb1c9975d84749bfa8d9fe48168d78823060c5d5f930dd9088b67",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -36874,7 +36948,8 @@
             "condition",
             "coldLevel"
           ],
-          "rootNodeId": "82bc424e3cef8a21fde6ef6b1869829060d471fccfb1663d42cc4715dcb281be",
+          "rootComponentId": "WeatherOverviewIconCompact@1.Root",
+          "rootContentDigest": "sha256:82bc424e3cef8a21fde6ef6b1869829060d471fccfb1663d42cc4715dcb281be",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -36974,7 +37049,8 @@
             "condition",
             "coldLevel"
           ],
-          "rootNodeId": "451044a4cca4769cdf9966679cd06b5277d3d7193cbc64f83a4c8db7440a9cdb",
+          "rootComponentId": "WeatherOverviewHero@1.Root",
+          "rootContentDigest": "sha256:451044a4cca4769cdf9966679cd06b5277d3d7193cbc64f83a4c8db7440a9cdb",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -37084,7 +37160,8 @@
             "airQuality",
             "coldLevel"
           ],
-          "rootNodeId": "5b28f0f8a16a2afc9d502918f87104cc057bac70f1c12a5e030b323c35b8ad42",
+          "rootComponentId": "WeatherOverviewFull@1.Root",
+          "rootContentDigest": "sha256:5b28f0f8a16a2afc9d502918f87104cc057bac70f1c12a5e030b323c35b8ad42",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -37202,7 +37279,8 @@
             "airQuality",
             "coldLevel"
           ],
-          "rootNodeId": "2a8c984c27758ddaf2775bd9f25e7216406d4c2aa04c45021bd9e22e6a53667c",
+          "rootComponentId": "WeatherOverviewIconFull@1.Root",
+          "rootContentDigest": "sha256:2a8c984c27758ddaf2775bd9f25e7216406d4c2aa04c45021bd9e22e6a53667c",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -37318,7 +37396,8 @@
             "airQuality",
             "coldLevel"
           ],
-          "rootNodeId": "be1b720dabe4c5b12c0605f23fde33f6b76a7a2a64734188d23c6dad04aad0dd",
+          "rootComponentId": "WeatherOverviewConditionFull@1.Root",
+          "rootContentDigest": "sha256:be1b720dabe4c5b12c0605f23fde33f6b76a7a2a64734188d23c6dad04aad0dd",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -37438,7 +37517,8 @@
             "airQuality",
             "coldLevel"
           ],
-          "rootNodeId": "a311f0d3a2f2e62f142baf1836b1075562265622228797974cf0feeffa51eaa9",
+          "rootComponentId": "WeatherOverviewHumidityFull@1.Root",
+          "rootContentDigest": "sha256:a311f0d3a2f2e62f142baf1836b1075562265622228797974cf0feeffa51eaa9",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -37558,7 +37638,8 @@
             "airQuality",
             "coldLevel"
           ],
-          "rootNodeId": "21dd2bcbf2275072b6e5abe47f9f3146d042d966c2f78e662635e484418ad4ab",
+          "rootComponentId": "WeatherOverviewUvFull@1.Root",
+          "rootContentDigest": "sha256:21dd2bcbf2275072b6e5abe47f9f3146d042d966c2f78e662635e484418ad4ab",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
@@ -37658,7 +37739,8 @@
             "airQuality",
             "coldLevel"
           ],
-          "rootNodeId": "975b8c47615a15687572ebe1257e48dfc8e44da4971e3dae8ad897605674fb7b",
+          "rootComponentId": "WeatherOverviewAirQualityHero@1.Root",
+          "rootContentDigest": "sha256:975b8c47615a15687572ebe1257e48dfc8e44da4971e3dae8ad897605674fb7b",
           "size": "default",
           "supportedCardSizes": [
             "2x2"
